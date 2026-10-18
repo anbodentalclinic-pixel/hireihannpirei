@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>比例と反比例 ブロックで考える</title>
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EAF1F6; --grid:#CFDDE8; --grid5:#A9C0D2; --ink:#1D2B3A; --sub:#4E6274;
+  --card:#FFFFFF; --line:#1D2B3A;
+  --grass:#4F9A3E; --grass2:#7CC264; --dirt:#8A5A33; --dirt2:#A97446;
+  --stone:#7F8B96; --stone2:#A3AEB8;
+  --gold:#F2B705; --gold2:#FFE07A;
+  --rasp:#B84A62; --rasp2:#E07A92;
+  --good:#2F7D5B; --goodbg:#DDF1E7; --hintbg:#FFF4CF;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#132131; --grid:#1F3346; --grid5:#2E4A63; --ink:#E7EEF5; --sub:#A7B7C6;
+    --card:#1A2B3E; --line:#0A121C;
+    --good:#7FD3A8; --goodbg:#16362A; --hintbg:#3A3215;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#132131; --grid:#1F3346; --grid5:#2E4A63; --ink:#E7EEF5; --sub:#A7B7C6;
+  --card:#1A2B3E; --line:#0A121C;
+  --good:#7FD3A8; --goodbg:#16362A; --hintbg:#3A3215;
+  color-scheme: dark;
+}
+:root{ box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+*,*::before,*::after{ box-sizing:inherit; }
+html{ scroll-padding-top:env(safe-area-inset-top,0px); }
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  font-size:17px; line-height:1.7;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+}
+.wrap{ max-width:680px; margin:0 auto; padding:16px 14px 64px; }
+h1,h2,.pix{ font-family:"DotGothic16","Zen Kaku Gothic New",monospace; font-weight:400; }
+h1{ font-size:26px; line-height:1.3; margin:8px 0 4px; }
+.lead{ margin:0 0 14px; color:var(--sub); font-size:15px; }
+nav.steps{ display:flex; gap:6px; overflow-x:auto; padding:4px 0 10px; }
+nav.steps button{
+  flex:0 0 auto; font:inherit; font-size:14px; padding:6px 10px;
+  border:2px solid var(--line); border-bottom-width:4px; background:var(--card); color:var(--ink);
+  border-radius:4px; cursor:pointer; white-space:nowrap;
+}
+nav.steps button[aria-current="step"]{ background:var(--gold); color:#1D2B3A; }
+nav.steps button:disabled{ opacity:.4; cursor:default; }
+section.stage{ background:var(--card); border:2px solid var(--line); border-radius:6px; padding:16px 14px 18px; }
+h2{ font-size:22px; margin:0 0 6px; line-height:1.35; }
+p{ margin:6px 0 10px; }
+.row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.btn{
+  font:inherit; font-weight:700; font-size:16px; padding:8px 14px; min-height:44px;
+  border:2px solid var(--line); border-bottom-width:5px; border-radius:6px;
+  background:var(--card); color:var(--ink); cursor:pointer;
+}
+.btn:active{ transform:translateY(2px); border-bottom-width:3px; }
+.btn.main{ background:var(--grass); color:#fff; }
+.btn.gold{ background:var(--gold); color:#1D2B3A; }
+.btn:disabled{ opacity:.45; cursor:default; transform:none; border-bottom-width:5px; }
+.btn.sq{ width:48px; padding:0; font-size:24px; }
+button:focus-visible, input:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+.big{ font-family:"DotGothic16",monospace; font-size:30px; min-width:2.2em; text-align:center; }
+input[type=range]{ width:100%; accent-color:var(--grass); }
+svg{ display:block; width:100%; height:auto; }
+.board{ margin:10px 0; border:2px solid var(--line); border-radius:4px; background:var(--paper); }
+.msg{ padding:10px 12px; border-radius:6px; border:2px solid var(--line); margin:10px 0; }
+.msg.ok{ background:var(--goodbg); }
+.msg.hint{ background:var(--hintbg); }
+.msg.warn{ background:var(--hintbg); }
+table{ border-collapse:collapse; width:100%; margin:8px 0; font-variant-numeric:tabular-nums; }
+.tscroll{ overflow-x:auto; }
+th,td{ border:2px solid var(--line); padding:4px 6px; text-align:center; min-width:34px; }
+th{ background:var(--paper); font-weight:700; white-space:nowrap; }
+td.dim{ opacity:.35; }
+td.hl, th.hl{ background:var(--gold2); color:#1D2B3A; }
+td.prod{ font-weight:900; color:var(--good); }
+.q{ margin:14px 0 4px; padding-top:12px; border-top:2px dashed var(--grid5); }
+.q h3{ margin:0 0 8px; font-size:18px; }
+.opts{ display:flex; flex-wrap:wrap; gap:8px; }
+.opts .btn{ font-weight:400; }
+.opts .btn.right{ background:var(--goodbg); border-color:var(--good); }
+.opts .btn.right:disabled{ opacity:1; font-weight:700; }
+.opts .btn.wrong{ opacity:.5; text-decoration:line-through; }
+.acard{ display:flex; gap:14px; align-items:center; padding:12px; border:3px solid var(--line); border-radius:6px; background:var(--gold2); color:#1D2B3A; margin:10px 0; }
+.acard .a{ font-family:"DotGothic16",monospace; font-size:40px; line-height:1; white-space:nowrap; }
+.acard b{ font-size:18px; }
+.cmp{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0; }
+.cmp > div{ border:2px solid var(--line); border-radius:6px; padding:10px; }
+.cmp h3{ margin:0 0 4px; font-size:18px; }
+.cmp .f{ font-family:"DotGothic16",monospace; font-size:22px; }
+.ex{ border:2px solid var(--line); border-radius:6px; padding:10px 12px; margin:8px 0; }
+.ex.bad{ border-style:dashed; }
+.ex .tag{ font-weight:900; }
+.ex.good .tag{ color:var(--good); }
+.ex.bad .tag{ color:var(--rasp); }
+.note{ font-family:"DotGothic16",monospace; font-size:19px; line-height:1.9; }
+.frac{ display:inline-flex; flex-direction:column; vertical-align:middle; text-align:center; line-height:1.05; margin:0 2px; }
+.frac span:first-child{ border-bottom:2px solid currentColor; padding:0 3px; }
+.eq{ font-family:"DotGothic16",monospace; font-size:24px; }
+input.num{ font:inherit; font-size:22px; width:7em; padding:6px 8px; border:2px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink); }
+.prog{ font-size:14px; color:var(--sub); }
+.foot{ margin-top:16px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.sit{ font-size:17px; padding:10px 12px; border-left:6px solid var(--grass); background:var(--paper); margin:8px 0; }
+@media (max-width:480px){ .cmp{ grid-template-columns:1fr; } h1{ font-size:22px; } }
+@media (prefers-reduced-motion: no-preference){
+  .pop{ animation:pop .35s ease-out; }
+  @keyframes pop{ from{ transform:scale(.6); opacity:0; } to{ transform:scale(1); opacity:1; } }
+}
+.howto{ border:2px solid var(--line); border-radius:6px; padding:10px 12px; background:var(--paper); margin:8px 0 12px; }
+.howto p{ margin:4px 0; }
+.howto .ex{ background:var(--card); }
+.step{ display:flex; gap:10px; align-items:flex-start; margin:12px 0 6px; }
+.step .n{ flex:0 0 auto; width:30px; height:30px; border:2px solid var(--line); border-radius:50%; display:grid; place-items:center; font-family:"DotGothic16",monospace; background:var(--gold); color:#1D2B3A; }
+.step .body{ flex:1; min-width:0; }
+svg .pop{ transform-box:fill-box; transform-origin:center; }
+input.num.s{ width:4.2em; font-size:20px; padding:4px 6px; }
+input.num.bad{ border-color:var(--rasp); background:var(--hintbg); }
+.tog .btn[aria-pressed="true"]{ background:var(--gold); color:#1D2B3A; }
+.once{ font-size:14px; color:var(--sub); margin:2px 0 6px; }
+.opts .btn.picked-wrong{ background:var(--hintbg); border-color:var(--rasp); opacity:1; }
+.opts .btn:disabled{ opacity:.55; }
+.msg.miss{ background:var(--hintbg); }
+.empty{ position:relative; }
+.empty .over{ position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
+.empty .over span{ background:var(--card); border:2px solid var(--line); border-radius:6px; padding:6px 10px; font-weight:700; }
+td input.num.s{ width:3em; font-size:17px; padding:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>比例と反比例 ブロックで考える</h1>
+  <p class="lead">予想してからブロックを動かし、式の「a」が何を表しているのかを見つけよう。</p>
+  <nav class="steps" id="nav" aria-label="ステージ"></nav>
+  <main id="app"></main>
+</div>
+<script>
+(function(){
+"use strict";
+var KEY = "hirei-block-v2";
+var STAGES = ["長方形を作る","変わらないもの","4個ずつの壁","見分ける","式を作る","紙でやる"];
+var DIV24 = [1,2,3,4,6,8,12,24];
+
+/* ---------- 小道具 ---------- */
+function shuffle(n){ var a=[]; for(var i=0;i<n;i++) a.push(i); for(i=n-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function m(n){ return n < 0 ? "−" + Math.abs(n) : String(n); }
+function par(n){ return n < 0 ? "(" + m(n) + ")" : String(n); }
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=a%b; a=b; b=t; } return a||1; }
+function rat(n,d){ if(d<0){ n=-n; d=-d; } var g=gcd(n,d); return {n:n/g, d:d/g}; }
+function ratHTML(r){
+  if(r.d===1) return m(r.n);
+  return (r.n<0?"−":"") + '<span class="frac"><span>'+Math.abs(r.n)+'</span><span>'+r.d+'</span></span>';
+}
+function parseNum(s){
+  s = String(s==null?"":s).trim().replace(/[−ー―－‐]/g,"-").replace(/／/g,"/").replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);}).replace(/．/g,".").replace(/\s/g,"");
+  if(!s) return null;
+  if(s.indexOf("/")>=0){
+    var p = s.split("/"); if(p.length!==2) return null;
+    var a = parseFloat(p[0]), b = parseFloat(p[1]);
+    if(isNaN(a)||isNaN(b)||b===0) return null; return a/b;
+  }
+  var v = Number(s); return isNaN(v) ? null : v;
+}
+function same(a,b){ return a!==null && Math.abs(a-b)<1e-9; }
+function val(id){ var e=document.getElementById(id); return e ? e.value : ""; }
+
+/* ---------- 式の問題をつくる ---------- */
+function genProb(k, cat){
+  var x, y, a;
+  if(k===0){
+    if(cat==="frac"){
+      var q = pick([2,3,4]), p = pick([1,3,5,-1,-3,-5]); if(gcd(p,q)!==1) p = (p>0?1:-1);
+      x = q*pick([1,2,-1,-2]); y = p*x/q;
+    }else{
+      a = (cat==="neg") ? pick([-2,-3,-4,-5,-6,-7]) : pick([2,3,4,5,6,7]);
+      x = (cat==="neg") ? pick([-4,-3,-2,2,3,4,5]) : pick([2,3,4,5,6]);
+      y = a*x;
+    }
+  }else{
+    var A = pick([12,18,20,24,28,30,36]);
+    if(cat==="neg") A = -A;
+    var ds = []; for(var i=2;i<=Math.abs(A)/2;i++){ if(Math.abs(A)%i===0) ds.push(i); }
+    x = pick(ds); if(cat==="neg" && Math.random()<0.5) x = -x;
+    y = A/x;
+  }
+  var g = Math.random()<0.6 ? ("x = "+m(x)+" のとき y = "+m(y)) : ("グラフが点 ("+m(x)+", "+m(y)+") を通る");
+  return {k:k, cat:cat, x:x, y:y, g:g, ord:shuffle(2)};
+}
+function firstRound(){
+  return [genProb(0,"pos"), genProb(1,"pos"), genProb(0,"neg"), genProb(1,"neg"), genProb(0,"frac"), genProb(1,"neg")];
+}
+
+/* ---------- 場面（見分ける） ---------- */
+var SIT = [
+  {t:"ななみさんは 1分間に 200m 走る。x 分で y m 進む。", xs:[1,2], ys:[200,400], ans:0, why:"y ÷ x がいつも 200。変わらないのは「1分あたりの道のり」。a = 200。"},
+  {t:"4人で 6日かかる仕事。x 人でやると y 日かかる。", xs:[1,2], ys:[24,12], ans:1, why:"人数 × 日数 がいつも 24。変わらないのは「全体の仕事」。a = 24。"},
+  {t:"周りの長さが 30cm の長方形。たて x cm、よこ y cm。", xs:[1,2], ys:[14,13], ans:2, why:"かけても、わっても同じ数にならない。変わらないのは たて ＋ よこ ＝ 15 で、これは比例でも反比例でもない。"},
+  {t:"1000円分のリボンを買う。1mあたり x 円のとき、長さは y m。", xs:[100,200], ys:[10,5], ans:1, why:"1mの値段 × 長さ がいつも 1000。変わらないのは「全体のお金」。a = 1000。"},
+  {t:"1本 100円のジュースを x 本買い、1000円出したおつりは y 円。", xs:[1,2], ys:[900,800], ans:2, why:"かけても、わっても同じ数にならない。y = 1000 − 100x で、ひき算が入る。"},
+  {t:"面積が 10cm² の三角形。底辺 x cm、高さ y cm。", xs:[1,2], ys:[20,10], ans:1, why:"三角形は 底辺 × 高さ ÷ 2 = 10 なので、底辺 × 高さ がいつも 20。a = 20（÷2 を忘れると 10 になってしまう）。"},
+  {t:"時速 3km で x 時間歩くと、道のりは y km。", xs:[1,2], ys:[3,6], ans:0, why:"y ÷ x がいつも 3。変わらないのは「1時間あたりの道のり」。a = 3。"}
+];
+var SIT2 = [
+  {t:"自転車で 1分間に 300m 進む。x 分で y m 進む。", xs:[1,2], ys:[300,600], ans:0, why:"y ÷ x がいつも 300。a = 300（1分あたりの道のり）。"},
+  {t:"2人で 9日かかる仕事。x 人でやると y 日かかる。", xs:[1,3], ys:[18,6], ans:1, why:"人数 × 日数 がいつも 18。a = 18（全体の仕事）。"},
+  {t:"周りの長さが 20cm の長方形。たて x cm、よこ y cm。", xs:[1,2], ys:[9,8], ans:2, why:"変わらないのは たて ＋ よこ ＝ 10。かけ算でもわり算でもない。"},
+  {t:"1200円分のテープを買う。1mあたり x 円のとき、長さは y m。", xs:[100,200], ys:[12,6], ans:1, why:"1mの値段 × 長さ がいつも 1200。a = 1200（全体のお金）。"},
+  {t:"1個 150円のパンを x 個買い、2000円出したおつりは y 円。", xs:[1,2], ys:[1850,1700], ans:2, why:"y = 2000 − 150x。ひき算が入るので、どちらでもない。"},
+  {t:"面積が 12cm² の三角形。底辺 x cm、高さ y cm。", xs:[1,2], ys:[24,12], ans:1, why:"底辺 × 高さ がいつも 24。a = 24（÷2 に注意）。"},
+  {t:"時速 4km で x 時間歩くと、道のりは y km。", xs:[1,2], ys:[4,8], ans:0, why:"y ÷ x がいつも 4。a = 4（1時間あたりの道のり）。"}
+];
+var TYPES = ["比例","反比例","どちらでもない"];
+
+/* ---------- 状態 ---------- */
+function oneShot(){ return {ord:null, pick:null}; }
+function fresh(){
+  return { stage:1, reached:1,
+    s1:{x:3, pred:"", rem:null, shown:false, found:[], log:[]},
+    s2:{cv:{}, bad:[], ok:false, dbl:"", dblOK:false, dblMiss:false, q24:oneShot(), q0:oneShot(), badEx:false},
+    s3:{x:1, pred:"", shown:false, seen:[], cv:{}, bad:[], ok:false, q4:oneShot()},
+    s4:{queue:[0,1,2,3,4,5,6].map(function(i){return {set:1,i:i};}), pos:0, phase:0, yv:["",""], ybad:[], pickOrd:shuffle(3), picked:null, done:false},
+    s5:{queue:firstRound(), pos:0, step:0, mPick:null, aIn:"", aOK:null, miss:false, extra:0, done:false} };
+}
+var S;
+try{ S = JSON.parse(localStorage.getItem(KEY)); }catch(e){ S = null; }
+if(!S || !S.s5 || !S.s1){ S = fresh(); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+var app = document.getElementById("app");
+var nav = document.getElementById("nav");
+
+/* ---------- 描画の部品 ---------- */
+function block(x,y,s,c1,c2){
+  return '<g><rect x="'+x+'" y="'+y+'" width="'+s+'" height="'+s+'" fill="'+c1+'" stroke="var(--line)" stroke-width="'+(s*0.06)+'"/>'+
+    '<rect x="'+(x+s*0.14)+'" y="'+(y+s*0.14)+'" width="'+(s*0.42)+'" height="'+(s*0.16)+'" fill="'+c2+'" opacity=".8"/></g>';
+}
+function gridLines(w,h,bold){
+  var g = "";
+  for(var i=0;i<=w;i++) g += '<line x1="'+i+'" y1="0" x2="'+i+'" y2="'+h+'" stroke="'+(i%bold===0?'var(--grid5)':'var(--grid)')+'" stroke-width="'+(i%bold===0?0.08:0.04)+'"/>';
+  for(var j=0;j<=h;j++) g += '<line x1="0" y1="'+j+'" x2="'+w+'" y2="'+j+'" stroke="'+(j%bold===0?'var(--grid5)':'var(--grid)')+'" stroke-width="'+(j%bold===0?0.08:0.04)+'"/>';
+  return g;
+}
+var N = 25;
+function Y(y){ return N - y; }
+function board24(o){
+  o = o||{};
+  var s = '<svg viewBox="-2.2 -0.8 28 28" role="img" aria-label="ブロックのグラフ">';
+  s += gridLines(N,N,5);
+  s += '<line x1="0" y1="'+Y(0)+'" x2="'+(N+0.6)+'" y2="'+Y(0)+'" stroke="var(--ink)" stroke-width=".14"/>';
+  s += '<line x1="0" y1="'+Y(0)+'" x2="0" y2="-0.6" stroke="var(--ink)" stroke-width=".14"/>';
+  [5,10,15,20,24].forEach(function(v){
+    s += '<text x="'+v+'" y="'+(Y(0)+1.15)+'" font-size=".9" text-anchor="middle" fill="var(--sub)">'+v+'</text>';
+    s += '<text x="-0.5" y="'+(Y(v)+0.32)+'" font-size=".9" text-anchor="end" fill="var(--sub)">'+v+'</text>';
+  });
+  s += '<text x="'+(N+0.4)+'" y="'+(Y(0)-0.4)+'" font-size="1" fill="var(--ink)" text-anchor="end">よこ x</text>';
+  s += '<text x="0.4" y="0.2" font-size="1" fill="var(--ink)">たて y</text>';
+  s += '<text x="-0.4" y="'+(Y(0)+1.15)+'" font-size=".9" text-anchor="end" fill="var(--sub)">0</text>';
+  if(o.blocksX){
+    var x = o.blocksX, full = Math.floor(24/x);
+    for(var k=0;k<24;k++){
+      var row = Math.floor(k/x), col = k % x, extra = (row===full);
+      s += block(col, Y(row+1), 1, extra?'var(--rasp)':(row===full-1?'var(--grass)':'var(--stone)'), extra?'var(--rasp2)':(row===full-1?'var(--grass2)':'var(--stone2)'));
+    }
+  }
+  if(o.curve){
+    var pts = [];
+    for(var i=0;i<=160;i++){ var t = 0.97*Math.pow(24.6/0.97, i/160); pts.push(t.toFixed(3)+','+Y(24/t).toFixed(3)); }
+    s += '<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--good)" stroke-width=".22" stroke-linecap="round"/>';
+  }
+  if(o.bad){
+    var bp = ['0,'+Y(0)];
+    DIV24.forEach(function(d){ bp.push(d+','+Y(24/d)); });
+    s += '<polyline points="'+bp.join(' ')+'" fill="none" stroke="var(--rasp)" stroke-width=".2" stroke-dasharray=".5 .35"/>';
+    s += '<text x="7" y="'+Y(18)+'" font-size="1" fill="var(--rasp)">悪い例：折れ線、原点までのばす</text>';
+  }
+  (o.dots||[]).forEach(function(d){
+    s += '<circle cx="'+d+'" cy="'+Y(24/d)+'" r=".42" fill="var(--gold)" stroke="var(--line)" stroke-width=".1"/>';
+  });
+  if(o.cur) s += '<circle class="pop" cx="'+o.cur+'" cy="'+Y(24/o.cur)+'" r=".6" fill="var(--gold)" stroke="var(--line)" stroke-width=".14"/>';
+  return s + '</svg>';
+}
+function wallSVG(x){
+  var s = '<svg viewBox="-0.3 -0.6 7.6 6.2" role="img" aria-label="1列4個の壁">';
+  s += '<rect x="-0.3" y="4.8" width="7.6" height="0.8" fill="var(--dirt)"/>';
+  for(var c=0;c<x;c++){
+    for(var r=0;r<4;r++) s += block(0.1+c*1.15, 3.8-r, 1, r===3?'var(--grass)':'var(--dirt)', r===3?'var(--grass2)':'var(--dirt2)');
+    s += '<text x="'+(0.6+c*1.15)+'" y="-0.15" font-size=".5" text-anchor="middle" fill="var(--sub)">'+(c+1)+'</text>';
+  }
+  return s + '</svg>';
+}
+function lineGraph(seen, showLine){
+  var sx=3, X0=1.6, B=26;
+  function GX(x){ return X0+x*sx; } function GY(y){ return B-y; }
+  var s = '<svg viewBox="-0.6 -0.8 23.4 28.6" role="img" aria-label="壁のグラフ">';
+  for(var i=0;i<=6;i++) s += '<line x1="'+GX(i)+'" y1="'+GY(0)+'" x2="'+GX(i)+'" y2="'+GY(25)+'" stroke="var(--grid)" stroke-width=".06"/>';
+  for(var j=0;j<=25;j++) s += '<line x1="'+GX(0)+'" y1="'+GY(j)+'" x2="'+GX(6.6)+'" y2="'+GY(j)+'" stroke="'+(j%4===0?'var(--grid5)':'var(--grid)')+'" stroke-width="'+(j%4===0?.08:.04)+'"/>';
+  s += '<line x1="'+GX(0)+'" y1="'+GY(0)+'" x2="'+GX(6.8)+'" y2="'+GY(0)+'" stroke="var(--ink)" stroke-width=".14"/>';
+  s += '<line x1="'+GX(0)+'" y1="'+GY(0)+'" x2="'+GX(0)+'" y2="'+GY(25.4)+'" stroke="var(--ink)" stroke-width=".14"/>';
+  for(i=0;i<=6;i++) s += '<text x="'+GX(i)+'" y="'+(GY(0)+1.2)+'" font-size=".9" text-anchor="middle" fill="var(--sub)">'+i+'</text>';
+  [4,8,12,16,20,24].forEach(function(v){ s += '<text x="'+(GX(0)-0.3)+'" y="'+(GY(v)+0.32)+'" font-size=".9" text-anchor="end" fill="var(--sub)">'+v+'</text>'; });
+  s += '<text x="'+GX(6.8)+'" y="'+(GY(0)-0.5)+'" font-size="1" text-anchor="end" fill="var(--ink)">列 x</text>';
+  s += '<text x="'+(GX(0)+0.4)+'" y="'+GY(25.2)+'" font-size="1" fill="var(--ink)">全部 y</text>';
+  if(showLine) s += '<line x1="'+GX(0)+'" y1="'+GY(0)+'" x2="'+GX(6.3)+'" y2="'+GY(25.2)+'" stroke="var(--good)" stroke-width=".22"/>';
+  seen.forEach(function(x){ s += '<circle cx="'+GX(x)+'" cy="'+GY(4*x)+'" r=".42" fill="var(--gold)" stroke="var(--line)" stroke-width=".1"/>'; });
+  return s + '</svg>';
+}
+function step(n, body){ return '<div class="step"><span class="n">'+n+'</span><div class="body">'+body+'</div></div>'; }
+
+/* 1回だけ答えられる選択問題 */
+function oneShotHTML(id, q, title, options, correct, explain){
+  if(!q.ord) q.ord = shuffle(options.length);
+  var h = '<div class="q"><h3>'+title+'</h3><p class="once">答えられるのは1回だけ。考えてから押そう。</p><div class="opts">';
+  q.ord.forEach(function(i){
+    var cls = "btn";
+    if(q.pick!==null){ if(i===correct) cls+=" right"; else if(i===q.pick) cls+=" picked-wrong"; }
+    h += '<button type="button" class="'+cls+'" data-one="'+id+'" data-i="'+i+'"'+(q.pick!==null?' disabled':'')+'>'+options[i]+'</button>';
+  });
+  h += '</div>';
+  if(q.pick!==null){
+    h += (q.pick===correct) ? '<div class="msg ok">そのとおり。'+explain+'</div>'
+                            : '<div class="msg miss">答えは「'+options[correct]+'」。'+explain+'</div>';
+  }
+  return h + '</div>';
+}
+
+/* ---------- ナビ ---------- */
+function renderNav(){
+  nav.innerHTML = STAGES.map(function(n,i){
+    var k=i+1;
+    return '<button type="button" data-go="'+k+'"'+(k===S.stage?' aria-current="step"':'')+(k>S.reached?' disabled':'')+'>'+k+' '+n+'</button>';
+  }).join("");
+}
+function go(k){ S.stage=k; if(k>S.reached) S.reached=k; save(); render(); window.scrollTo(0,0); }
+function foot(back, next, nextLabel, enabled){
+  return '<div class="foot">'+(back?'<button type="button" class="btn" data-go="'+back+'">もどる</button>':'<span></span>')+
+    (next?'<button type="button" class="btn gold" data-go="'+next+'"'+(enabled?'':' disabled')+'>'+nextLabel+'</button>':'')+'</div>';
+}
+
+/* ---------- ステージ1 ---------- */
+function stage1(){
+  var s1=S.s1, x=s1.x, full=Math.floor(24/x), r=24%x;
+  var found = s1.found.slice().sort(function(a,b){return a-b;});
+  var h = '<h2>24個のブロックで長方形を作ろう</h2>';
+  h += '<div class="howto"><p><b>ルール</b>　24個のブロックを、よこに同じ数ずつ並べて、下から1段ずつ積む。最後の段までぴったりそろえば長方形。</p>'+
+       '<div class="ex good"><span class="tag">長方形になる例</span>　よこ2個ずつ → 12段。あまりなし。</div>'+
+       '<div class="ex bad"><span class="tag">長方形にならない例</span>　よこ5個ずつ → 4段できて、4個あまる。</div></div>';
+  h += step(1, '<b>よこに何個ずつ並べる？</b><div class="row"><button type="button" class="btn sq" data-act="xm" aria-label="1へらす">−</button><span class="big">'+x+'</span><span>個ずつ</span><button type="button" class="btn sq" data-act="xp" aria-label="1ふやす">+</button></div>');
+  var dis = s1.shown ? ' disabled' : '';
+  h += step(2, '<b>並べる前に予想しよう</b><div class="row">たては <input id="p1" class="num s" inputmode="numeric" autocomplete="off" value="'+s1.pred+'"'+dis+'> 段</div>'+
+       '<div class="row tog" style="margin-top:6px">あまりは <button type="button" class="btn" data-act="remN" aria-pressed="'+(s1.rem==="n")+'"'+dis+'>出ない</button><button type="button" class="btn" data-act="remY" aria-pressed="'+(s1.rem==="y")+'"'+dis+'>出る</button></div>');
+  h += step(3, '<button type="button" class="btn main" data-act="build"'+dis+'>並べてたしかめる</button>'+(s1.err?'<div class="msg hint">'+s1.err+'</div>':''));
+  if(s1.shown){
+    h += '<div class="board">'+board24({blocksX:x, dots:found, cur:r===0?x:null})+'</div>';
+    var p = s1.log[s1.log.length-1];
+    var hit = (p.pred===full) && ((p.rem==="n")===(r===0));
+    h += '<div class="msg '+(hit?'ok':'miss')+'">予想：'+p.pred+'段・あまり'+(p.rem==="n"?'出ない':'出る')+'<br>実際：'+full+'段・あまり'+r+'個<br>'+
+         (hit?'予想どおり。':'予想とちがった。どこがちがったか、ブロックを数えてみよう。')+
+         (r===0?' <b>長方形ができた！</b> 右上の角に●がついた。':' 長方形にはならない。')+'</div>';
+    h += '<p>次は、よこの数を変えてもう一度。</p>';
+  }else{
+    h += '<div class="board empty">'+board24({dots:found})+'<div class="over"><span>予想を入れてから並べよう</span></div></div>';
+  }
+  h += '<p class="prog">見つけた長方形：'+found.length+' / 8</p>';
+  if(found.length){
+    h += '<div class="tscroll"><table><tr><th>よこ x</th>'+found.map(function(f){return '<td>'+f+'</td>';}).join('')+'</tr><tr><th>たて y</th>'+found.map(function(f){return '<td>'+(24/f)+'</td>';}).join('')+'</tr></table></div>';
+  }
+  if(found.length>=8) h += '<div class="msg ok">8種類ぜんぶ見つけた。●の並び方を見てから次へ。</div>';
+  else if(found.length>=4) h += '<p class="prog">4つ見つけたら次へ進める。全部で8つある。</p>';
+  return h + foot(0,2,'次へ：変わらないもの', found.length>=4);
+}
+
+/* ---------- ステージ2 ---------- */
+var CALC2 = [2,3,8];
+function stage2(){
+  var s2=S.s2, found=S.s1.found;
+  var h = '<h2>どの長方形でも変わらないものは？</h2>';
+  h += '<div class="board">'+board24({dots:s2.q0.pick!==null?DIV24:found, curve:s2.q0.pick!==null, bad:s2.q0.pick!==null && s2.badEx})+'</div>';
+  var t = '<div class="tscroll"><table><tr><th>よこ x</th>';
+  DIV24.forEach(function(d){ t += '<td class="'+(found.indexOf(d)<0?'dim':'')+'">'+d+'</td>'; });
+  t += '</tr><tr><th>たて y</th>';
+  DIV24.forEach(function(d){ t += '<td class="'+(found.indexOf(d)<0?'dim':'')+'">'+(24/d)+'</td>'; });
+  t += '</tr>';
+  if(s2.ok){
+    t += '<tr><th>x × y</th>'; DIV24.forEach(function(){ t += '<td class="prod">24</td>'; }); t += '</tr>';
+    t += '<tr><th>x ＋ y</th>'; DIV24.forEach(function(d){ t += '<td>'+(d+24/d)+'</td>'; }); t += '</tr>';
+  }
+  h += t + '</table></div><p class="prog">うすい数は、まだ見つけていない長方形。</p>';
+
+  // 計算
+  var c = '<b>計算して入れよう</b><div class="tscroll"><table><tr><th>よこ x</th>'+CALC2.map(function(d){return '<td>'+d+'</td>';}).join('')+'</tr>'+
+          '<tr><th>たて y</th>'+CALC2.map(function(d){return '<td>'+(24/d)+'</td>';}).join('')+'</tr>';
+  ['p','s'].forEach(function(kind){
+    c += '<tr><th>'+(kind==='p'?'x × y':'x ＋ y')+'</th>';
+    CALC2.forEach(function(d){
+      var id='c2'+kind+d, v=s2.cv[id]||"";
+      c += '<td><input id="'+id+'" class="num s'+(s2.bad.indexOf(id)>=0?' bad':'')+'" inputmode="numeric" autocomplete="off" value="'+v+'"'+(s2.ok?' disabled':'')+'></td>';
+    });
+    c += '</tr>';
+  });
+  c += '</table></div>';
+  if(!s2.ok){
+    c += '<button type="button" class="btn main" data-act="c2chk">計算をたしかめる</button>';
+    if(s2.bad.length) c += '<div class="msg hint">色のついたところをもう一度計算しよう。</div>';
+  }else{
+    c += '<div class="msg ok">よこ × たて は、どれも 24。よこ ＋ たて は、25、14、11… とばらばら。</div>';
+  }
+  h += step(1, c);
+
+  if(s2.ok){
+    var d = '<b>よこが 3 → 6 と2倍になると、たては 8 → <input id="dbl" class="num s'+(s2.dblMiss?' bad':'')+'" inputmode="numeric" autocomplete="off" value="'+s2.dbl+'"'+(s2.dblOK?' disabled':'')+'></b>';
+    if(!s2.dblOK) d += ' <button type="button" class="btn main" data-act="dbl">たしかめる</button>'+(s2.dblMiss?'<div class="msg hint">表の よこ6 のところを見よう。</div>':'');
+    else d += '<div class="msg ok">よこが2倍になると、たては半分。片方がふえると、もう片方がへる。</div>';
+    h += step(2, d);
+  }
+  if(s2.dblOK){
+    h += oneShotHTML("q24", s2.q24, "いつも同じになった 24 は、何の数？", ["使ったブロック全部の数","1段に並べる数","積んだ段の数"], 0,
+      '<div class="acard pop"><span class="a">a=24</span><span><b>反比例の a は「全体の量」</b><br>よこ × たて はいつも 24。式は y = 24 / x</span></div>');
+  }
+  if(s2.q24.pick!==null){
+    h += oneShotHTML("q0", s2.q0, "よこ 0 個ずつで、長方形は作れる？", ["作れる","作れない"], 1,
+      'よこ0個では24個をどこにも置けない。x = 0 のときの y はない。だから反比例のグラフは軸にくっつかず、原点も通らない。点はなめらかな曲線でつなぐ。'+
+      '<div style="margin-top:8px"><button type="button" class="btn" data-act="badEx">'+(s2.badEx?'悪い例をけす':'悪い例をグラフで見る')+'</button></div>');
+  }
+  return h + foot(1,3,'次へ：4個ずつの壁', s2.q0.pick!==null);
+}
+
+/* ---------- ステージ3 ---------- */
+function stage3(){
+  var s3=S.s3, x=s3.x;
+  var seen = s3.seen.slice().sort(function(a,b){return a-b;});
+  var h = '<h2>1列に4個ずつ、壁を作ろう</h2>';
+  h += '<div class="howto"><p><b>ルール</b>　1列は必ず4個。列をふやすと、全部のブロック数がどう変わるかを調べる。</p></div>';
+  var dis = s3.shown?' disabled':'';
+  h += step(1, '<b>何列作る？</b><div class="row"><button type="button" class="btn sq" data-act="wm" aria-label="1へらす">−</button><span class="big">'+x+'</span><span>列</span><button type="button" class="btn sq" data-act="wp" aria-label="1ふやす">+</button></div>');
+  h += step(2, '<b>作る前に予想しよう</b><div class="row">全部で <input id="p3" class="num s" inputmode="numeric" autocomplete="off" value="'+s3.pred+'"'+dis+'> 個</div>');
+  h += step(3, '<button type="button" class="btn main" data-act="wall"'+dis+'>作ってたしかめる</button>'+(s3.err?'<div class="msg hint">'+s3.err+'</div>':''));
+  if(s3.shown){
+    var hit = parseNum(s3.pred)===4*x;
+    h += '<div class="board">'+wallSVG(x)+'</div>';
+    h += '<div class="msg '+(hit?'ok':'miss')+'">予想：'+s3.pred+'個　実際：'+(4*x)+'個。'+(hit?'予想どおり。':'予想とちがった。列ごとに数えてみよう。')+'</div>';
+  }
+  h += '<div class="board">'+lineGraph(seen, s3.q4.pick!==null)+'</div>';
+  if(seen.length) h += '<div class="tscroll"><table><tr><th>列 x</th>'+seen.map(function(v){return '<td>'+v+'</td>';}).join('')+'</tr><tr><th>全部 y</th>'+seen.map(function(v){return '<td>'+(4*v)+'</td>';}).join('')+'</tr></table></div>';
+  if(seen.length<3){ h += '<p class="prog">3通り作ると、次の問題が出る。</p>'; }
+  else{
+    var cols = seen.slice(0,3);
+    var c = '<b>全部 ÷ 列 を計算して入れよう</b><div class="tscroll"><table><tr><th>列 x</th>'+cols.map(function(v){return '<td>'+v+'</td>';}).join('')+'</tr><tr><th>全部 y</th>'+cols.map(function(v){return '<td>'+(4*v)+'</td>';}).join('')+'</tr><tr><th>全部 ÷ 列</th>';
+    cols.forEach(function(v){ var id='c3'+v; c += '<td><input id="'+id+'" class="num s'+(s3.bad.indexOf(id)>=0?' bad':'')+'" inputmode="numeric" autocomplete="off" value="'+(s3.cv[id]||"")+'"'+(s3.ok?' disabled':'')+'></td>'; });
+    c += '</tr></table></div>';
+    if(!s3.ok){ c += '<button type="button" class="btn main" data-act="c3chk">計算をたしかめる</button>'+(s3.bad.length?'<div class="msg hint">色のついたところをもう一度計算しよう。</div>':''); }
+    else c += '<div class="msg ok">全部 ÷ 列 は、どれも 4。列が2倍になると全部も2倍。</div>';
+    h += step(4, c);
+    if(s3.ok){
+      h += oneShotHTML("q4", s3.q4, "いつも同じになった 4 は、何の数？", ["1列のブロックの数","全部のブロックの数","列の数"], 0,
+        '<div class="acard pop"><span class="a">a=4</span><span><b>比例の a は「1つあたりの量」</b><br>全部 ÷ 列 はいつも 4。式は y = 4x</span></div>'+
+        '0列なら0個。だから比例のグラフは原点を通るまっすぐな線。反比例と反対。');
+    }
+  }
+  return h + foot(2,4,'次へ：見分ける', s3.q4.pick!==null);
+}
+
+/* ---------- ステージ4 ---------- */
+function curSit(){ var q=S.s4.queue[S.s4.pos]; return q ? (q.set===1?SIT:SIT2)[q.i] : null; }
+function stage4(){
+  var s4=S.s4;
+  var h = '<h2>変わらないもので見分けよう</h2>';
+  h += '<div class="cmp"><div><h3>比例</h3><div>変わらない：<b>1つあたり</b></div><div class="f">y ÷ x が同じ</div></div>'+
+       '<div><h3>反比例</h3><div>変わらない：<b>全体</b></div><div class="f">x × y が同じ</div></div></div>';
+  if(s4.done){
+    h += '<div class="msg ok">ぜんぶ終わった。迷ったら、数を2つ入れて表を作り、かけたりわったりすれば見分けられる。</div>';
+    h += '<button type="button" class="btn" data-act="s4again">もう一度やる</button>';
+    return h + foot(3,5,'次へ：式を作る', true);
+  }
+  var q = curSit();
+  h += '<p class="prog">'+(s4.pos+1)+' 問目 ／ のこり '+(s4.queue.length-s4.pos)+' 問（まちがえた場面は、数を変えてあとでもう一度出る）</p>';
+  h += '<div class="sit">'+q.t+'</div>';
+  var tb = '<b>x に数を入れて、y を計算しよう</b><div class="tscroll"><table><tr><th>x</th><td>'+q.xs[0]+'</td><td>'+q.xs[1]+'</td></tr><tr><th>y</th>';
+  [0,1].forEach(function(k){ tb += '<td><input id="y4'+k+'" class="num s'+(s4.ybad.indexOf(k)>=0?' bad':'')+'" inputmode="numeric" autocomplete="off" value="'+s4.yv[k]+'"'+(s4.phase>0?' disabled':'')+'></td>'; });
+  tb += '</tr>';
+  if(s4.phase>0){
+    tb += '<tr><th>x × y</th><td>'+(q.xs[0]*q.ys[0])+'</td><td>'+(q.xs[1]*q.ys[1])+'</td></tr>';
+    tb += '<tr><th>y ÷ x</th><td>'+fmtDiv(q.ys[0],q.xs[0])+'</td><td>'+fmtDiv(q.ys[1],q.xs[1])+'</td></tr>';
+  }
+  tb += '</table></div>';
+  if(s4.phase===0){
+    tb += '<button type="button" class="btn main" data-act="y4">計算をたしかめる</button>';
+    if(s4.ybad.length) tb += '<div class="msg hint">色のついたところを、場面をもう一度読んで計算し直そう。</div>';
+  }
+  h += step(1, tb);
+  if(s4.phase>0){
+    var o = '<b>かけ算とわり算の行を見て、どれか選ぼう</b><p class="once">答えられるのは1回だけ。</p><div class="opts">';
+    s4.pickOrd.forEach(function(i){
+      var cls="btn";
+      if(s4.picked!==null){ if(i===q.ans) cls+=" right"; else if(i===s4.picked) cls+=" picked-wrong"; }
+      o += '<button type="button" class="'+cls+'" data-s4="'+i+'"'+(s4.picked!==null?' disabled':'')+'>'+TYPES[i]+'</button>';
+    });
+    o += '</div>';
+    if(s4.picked!==null){
+      o += (s4.picked===q.ans) ? '<div class="msg ok">'+TYPES[q.ans]+'。'+q.why+'</div>'
+                               : '<div class="msg miss">答えは「'+TYPES[q.ans]+'」。'+q.why+'<br>数を変えた場面が、あとでもう一度出る。</div>';
+      o += '<button type="button" class="btn main" data-act="s4next">'+(s4.pos+1<s4.queue.length?'次の場面':'終わる')+'</button>';
+    }
+    h += step(2, o);
+  }
+  return h + foot(3,5,'次へ：式を作る', false);
+}
+function fmtDiv(a,b){ var r=rat(a,b); return ratHTML(r); }
+
+/* ---------- ステージ5 ---------- */
+function aOf(p){ return p.k===0 ? rat(p.y,p.x) : rat(p.x*p.y,1); }
+function formulaHTML(p){
+  var a = aOf(p);
+  if(p.k===0){
+    var coef = (a.d===1) ? (a.n===1?'':(a.n===-1?'−':m(a.n))) : ratHTML(a);
+    return 'y = '+coef+'x';
+  }
+  return 'y = '+(a.n<0?'−':'')+'<span class="frac"><span>'+Math.abs(a.n)+'</span><span>x</span></span>';
+}
+function calcLine(p){ return p.k===0 ? 'a = '+m(p.y)+' ÷ '+par(p.x) : 'a = '+m(p.x)+' × '+par(p.y); }
+function checkLine(p){
+  var a = aOf(p);
+  if(p.k===0) return 'x = '+m(p.x)+' を入れると　'+ratHTML(a)+' × '+par(p.x)+' = '+m(p.y);
+  return 'x = '+m(p.x)+' を入れると　'+m(a.n)+' ÷ '+par(p.x)+' = '+m(p.y);
+}
+function missHint(p, v){
+  var a=aOf(p), want=a.n/a.d;
+  if(same(v,-want)) return "数はあっていて、符号（＋か−か）がちがった。マイナス × マイナス はプラス。";
+  if(p.k===0 && same(v,p.x/p.y)) return "わる順番が逆だった。比例の a は y ÷ x。";
+  if(p.k===0 && same(v,p.x*p.y)) return "かけ算になっていた。比例の a は「1つあたり」なので、わり算。";
+  if(p.k===1 && (same(v,p.y/p.x)||same(v,p.x/p.y))) return "わり算になっていた。反比例の a は「全体」なので、x × y。";
+  return "上の式を、1行に1ステップずつ計算し直してみよう。";
+}
+function stage5(){
+  var s5=S.s5;
+  var h = '<h2>「aは何？」から式を作ろう</h2>';
+  h += '<div class="ex bad"><span class="tag">悪い例</span>　比例で x = 2 のとき y = 8 →<span class="note">「8y = 2x」</span><br>a がどこにもない。何を表す式なのか言えない。</div>';
+  h += '<div class="ex good"><span class="tag">いい例</span><div class="note">aは1つあたり<br>a = 8 ÷ 2 = 4<br>y = 4x<br>たしかめ　4 × 2 = 8 ✓</div></div>';
+  if(s5.done){
+    h += '<div class="msg ok">ぜんぶ終わった。式を書く前に「aは○○」と言えれば、「8y = 2x」にはならない。</div>';
+    h += '<button type="button" class="btn" data-act="s5again">新しい問題でもう一度</button>';
+    return h + foot(4,6,'次へ：紙でやる', true);
+  }
+  var p = s5.queue[s5.pos], a = aOf(p);
+  h += '<p class="prog">'+(s5.pos+1)+' 問目 ／ のこり '+(s5.queue.length-s5.pos)+' 問（まちがえたら、数を変えた問題がもう一度出る）</p>';
+  h += '<div class="sit">y は x に<b>'+TYPES[p.k]+'</b>し、'+p.g+'。y を x の式で表そう。</div>';
+  var opts = ["1つあたりの量　a = y ÷ x","全体の量　a = x × y"];
+  var o = '<b>この a は何？</b><p class="once">答えられるのは1回だけ。</p><div class="opts">';
+  p.ord.forEach(function(i){
+    var cls="btn";
+    if(s5.mPick!==null){ if(i===p.k) cls+=" right"; else if(i===s5.mPick) cls+=" picked-wrong"; }
+    o += '<button type="button" class="'+cls+'" data-s5m="'+i+'"'+(s5.mPick!==null?' disabled':'')+'>'+opts[i]+'</button>';
+  });
+  o += '</div>';
+  if(s5.mPick!==null && s5.mPick!==p.k) o += '<div class="msg miss">'+(p.k===0?'比例で変わらないのは「1つあたり」。4個ずつの壁を思い出そう。':'反比例で変わらないのは「全体」。24個の長方形を思い出そう。')+'</div>';
+  h += step(1, o);
+  if(s5.mPick!==null){
+    var c = '<div class="eq">'+calcLine(p)+'</div>';
+    if(s5.aOK===null){
+      c += '<div class="row" style="margin-top:8px"><label for="ain">a =</label><input id="ain" class="num" inputmode="text" autocomplete="off" placeholder="例 −3/2"><button type="button" class="btn main" data-act="s5chk">決定</button></div>';
+      c += '<p class="once">分数は 3/4、マイナスは − で入れる。決定は1回だけ。</p>';
+    }else if(s5.aOK){
+      c += '<div class="msg ok">a = '+ratHTML(a)+'　正しい。</div>';
+    }else{
+      c += '<div class="msg miss">入れた答え：'+s5.aIn+'　正しくは a = '+ratHTML(a)+'。'+missHint(p, parseNum(s5.aIn))+'</div>';
+    }
+    h += step(2, '<b>a を計算しよう</b>'+c);
+  }
+  if(s5.aOK!==null){
+    var f = '<div class="eq">'+formulaHTML(p)+'</div><div class="msg ok">たしかめ：'+checkLine(p)+'。問題の y = '+m(p.y)+' と同じ ✓</div>';
+    f += '<button type="button" class="btn main" data-act="s5next">'+(s5.pos+1<s5.queue.length||(s5.miss&&s5.extra<6)?'次の問題':'終わる')+'</button>';
+    h += step(3, '<b>式と たしかめ</b>'+f);
+  }
+  return h + foot(4,6,'次へ：紙でやる', false);
+}
+
+/* ---------- ステージ6 ---------- */
+function stage6(){
+  var h = '<h2>紙でやるときの約束</h2>';
+  h += '<div class="acard"><span class="a">a=?</span><span><b>式を書く前に「aは○○」と一言書く</b><br>正解かどうかより、この順番が大事。</span></div>';
+  h += '<div class="ex good"><span class="tag">いい例</span>（2000mを10分で走った。比例）<div class="note">aは1分あたりに進む道のり<br>a = 2000 ÷ 10 = 200<br>y = 200x<br>たしかめ　200 × 10 = 2000 ✓</div></div>';
+  h += '<div class="ex good"><span class="tag">いい例</span>（4人で6日。反比例）<div class="note">aは全体の仕事<br>a = 4 × 6 = 24<br>y = 24 / x<br>たしかめ　24 ÷ 4 = 6 ✓</div></div>';
+  h += '<div class="ex bad"><span class="tag">悪い例</span><div class="note">8y = 2x</div>「aは○○」がないので、何の式かわからない。</div>';
+  h += '<p>ワークの章末問題（p.94〜97）で式を書く問題が出たら、この約束を使おう。</p>';
+  h += '<div class="foot"><button type="button" class="btn" data-go="5">もどる</button><button type="button" class="btn" data-act="reset">最初からやり直す</button></div>';
+  return h;
+}
+
+/* ---------- 全体描画 ---------- */
+function render(){
+  renderNav();
+  var f = [null,stage1,stage2,stage3,stage4,stage5,stage6][S.stage] || stage1;
+  app.innerHTML = '<section class="stage">'+f()+'</section>';
+  save();
+}
+
+/* ---------- 操作 ---------- */
+function act(a){
+  var s1=S.s1, s2=S.s2, s3=S.s3, s4=S.s4, s5=S.s5, v;
+  switch(a){
+    case "xm": case "xp":
+      s1.x = Math.min(24, Math.max(1, s1.x + (a==="xp"?1:-1)));
+      s1.shown=false; s1.pred=""; s1.rem=null; s1.err=null; break;
+    case "remN": s1.pred=val("p1"); s1.rem="n"; break;
+    case "remY": s1.pred=val("p1"); s1.rem="y"; break;
+    case "build":
+      s1.pred=val("p1"); v=parseNum(s1.pred);
+      if(v===null || v<0 || v!==Math.floor(v)){ s1.err="たてが何段になるか、数で予想を入れよう。"; break; }
+      if(!s1.rem){ s1.err="あまりが出るか出ないかも予想しよう。"; break; }
+      s1.err=null; s1.shown=true; s1.log.push({x:s1.x, pred:v, rem:s1.rem});
+      if(24%s1.x===0 && s1.found.indexOf(s1.x)<0) s1.found.push(s1.x);
+      break;
+    case "c2chk":
+      s2.bad=[];
+      CALC2.forEach(function(d){
+        var ip='c2p'+d, is='c2s'+d; s2.cv[ip]=val(ip); s2.cv[is]=val(is);
+        if(!same(parseNum(s2.cv[ip]),24)) s2.bad.push(ip);
+        if(!same(parseNum(s2.cv[is]),d+24/d)) s2.bad.push(is);
+      });
+      if(!s2.bad.length) s2.ok=true; break;
+    case "dbl":
+      s2.dbl=val("dbl"); if(same(parseNum(s2.dbl),4)){ s2.dblOK=true; s2.dblMiss=false; } else s2.dblMiss=true; break;
+    case "badEx": s2.badEx=!s2.badEx; break;
+    case "wm": case "wp":
+      s3.x = Math.min(6, Math.max(1, s3.x + (a==="wp"?1:-1)));
+      s3.shown=false; s3.pred=""; s3.err=null; break;
+    case "wall":
+      s3.pred=val("p3"); v=parseNum(s3.pred);
+      if(v===null){ s3.err="全部で何個になるか、数で予想を入れよう。"; break; }
+      s3.err=null; s3.shown=true; if(s3.seen.indexOf(s3.x)<0) s3.seen.push(s3.x); break;
+    case "c3chk":
+      s3.bad=[];
+      s3.seen.slice().sort(function(a,b){return a-b;}).slice(0,3).forEach(function(c){
+        var id='c3'+c; s3.cv[id]=val(id); if(!same(parseNum(s3.cv[id]),4)) s3.bad.push(id);
+      });
+      if(!s3.bad.length) s3.ok=true; break;
+    case "y4":
+      var q=curSit(); s4.ybad=[];
+      [0,1].forEach(function(k){ s4.yv[k]=val("y4"+k); if(!same(parseNum(s4.yv[k]), q.ys[k])) s4.ybad.push(k); });
+      if(!s4.ybad.length) s4.phase=1; break;
+    case "s4next":
+      var cur=s4.queue[s4.pos], qq=curSit();
+      if(s4.picked!==qq.ans && cur.set===1) s4.queue.push({set:2,i:cur.i});
+      s4.pos++; s4.phase=0; s4.yv=["",""]; s4.ybad=[]; s4.picked=null; s4.pickOrd=shuffle(3);
+      if(s4.pos>=s4.queue.length) s4.done=true; break;
+    case "s4again":
+      S.s4={queue:shuffle(7).map(function(i){return {set:1,i:i};}), pos:0, phase:0, yv:["",""], ybad:[], pickOrd:shuffle(3), picked:null, done:false}; break;
+    case "s5chk":
+      var p=s5.queue[s5.pos]; s5.aIn=val("ain"); v=parseNum(s5.aIn);
+      if(v===null) return;
+      var A=aOf(p); s5.aOK = same(v, A.n/A.d); if(!s5.aOK) s5.miss=true; break;
+    case "s5next":
+      var pp=s5.queue[s5.pos];
+      if(s5.miss && s5.extra<6){ s5.queue.push(genProb(pp.k, pp.cat)); s5.extra++; }
+      s5.pos++; s5.step=0; s5.mPick=null; s5.aIn=""; s5.aOK=null; s5.miss=false;
+      if(s5.pos>=s5.queue.length) s5.done=true; break;
+    case "s5again":
+      S.s5={queue:firstRound(), pos:0, step:0, mPick:null, aIn:"", aOK:null, miss:false, extra:0, done:false}; break;
+    case "reset":
+      if(confirm("最初からやり直しますか？")) S=fresh(); break;
+    default: return;
+  }
+  render();
+}
+
+document.addEventListener("click",function(e){
+  var t = e.target.closest("button"); if(!t || t.disabled) return;
+  if(t.dataset.go){ go(+t.dataset.go); return; }
+  if(t.dataset.one){
+    var holder = t.dataset.one==="q4" ? S.s3 : S.s2;
+    var q = holder[t.dataset.one]; if(q.pick===null){ q.pick=+t.dataset.i; render(); } return;
+  }
+  if(t.dataset.s4!=null){ if(S.s4.picked===null){ S.s4.picked=+t.dataset.s4; render(); } return; }
+  if(t.dataset.s5m!=null){
+    var s5=S.s5, p=s5.queue[s5.pos];
+    if(s5.mPick===null){ s5.mPick=+t.dataset.s5m; if(s5.mPick!==p.k) s5.miss=true; render(); }
+    return;
+  }
+  if(t.dataset.act) act(t.dataset.act);
+});
+document.addEventListener("keydown",function(e){
+  if(e.key!=="Enter" || !e.target.matches || !e.target.matches("input")) return;
+  var id=e.target.id;
+  if(id==="p1") act("build"); else if(id==="p3") act("wall"); else if(id==="ain") act("s5chk");
+  else if(id==="dbl") act("dbl"); else if(id.indexOf("c2")===0) act("c2chk"); else if(id.indexOf("c3")===0) act("c3chk"); else if(id.indexOf("y4")===0) act("y4");
+});
+document.addEventListener("input",function(e){
+  if(e.target.id==="p1") S.s1.pred=e.target.value;
+  if(e.target.id==="p3") S.s3.pred=e.target.value;
+});
+render();
+})();
+</script>
+</body>
+</html>
