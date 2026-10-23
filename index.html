@@ -151,7 +151,7 @@ td input.num.s{ width:3em; font-size:17px; padding:4px; }
 (function(){
 "use strict";
 var KEY = "hirei-block-v2";
-var STAGES = ["長方形を作る","変わらないもの","4個ずつの壁","見分ける","式を作る","紙でやる","ワークの直し"];
+var STAGES = ["長方形を作る","変わらないもの","4個ずつの壁","見分ける","式を作る","紙でやる","ワークの直し","文章題"];
 var DIV24 = [1,2,3,4,6,8,12,24];
 
 /* ---------- 小道具 ---------- */
@@ -341,10 +341,10 @@ function oneShotHTML(id, q, title, options, correct, explain){
 function renderNav(){
   nav.innerHTML = STAGES.map(function(n,i){
     var k=i+1;
-    return '<button type="button" data-go="'+k+'"'+(k===S.stage?' aria-current="step"':'')+(k>S.reached&&k!==7?' disabled':'')+'>'+k+' '+n+'</button>';
+    return '<button type="button" data-go="'+k+'"'+(k===S.stage?' aria-current="step"':'')+(k>S.reached&&k<7?' disabled':'')+'>'+k+' '+n+'</button>';
   }).join("");
 }
-function go(k){ S.stage=k; if(k>S.reached && k!==7) S.reached=k; save(); render(); window.scrollTo(0,0); }
+function go(k){ S.stage=k; if(k>S.reached && k<7) S.reached=k; save(); render(); window.scrollTo(0,0); }
 function foot(back, next, nextLabel, enabled){
   return '<div class="foot">'+(back?'<button type="button" class="btn" data-go="'+back+'">もどる</button>':'<span></span>')+
     (next?'<button type="button" class="btn gold" data-go="'+next+'"'+(enabled?'':' disabled')+'>'+nextLabel+'</button>':'')+'</div>';
@@ -693,7 +693,257 @@ var FIXDAYS = [
   {label:"10/21 比例の式", ids:["p1","p2","p3","p4","p5","p6"]},
   {label:"10/22 反比例の式・グラフ", ids:["h1","h2","h3","h4","h5","h6","h7"]}
 ];
-function freshFix(){ return {day:0, days:FIXDAYS.map(function(d){ return {q:d.ids.map(function(id){return {id:id};}), pos:0, cur:null, done:false, again:[]}; })}; }
+/* ---------- 文章題（10/23〜25） ---------- */
+function svgWrap(vb, inner, label){ return '<svg viewBox="'+vb+'" role="img" aria-label="'+(label||'図')+'">'+inner+'</svg>'; }
+function txt(x,y,s,size,anchor,col){ return '<text x="'+x+'" y="'+y+'" font-size="'+(size||.8)+'" text-anchor="'+(anchor||'middle')+'" fill="'+(col||'var(--ink)')+'">'+s+'</text>'; }
+function figTri(){
+  var X=function(x){return x+5.5;}, Y=function(y){return 5.5-y;};
+  var g='';
+  for(var i=-5;i<=7;i++) g+='<line x1="'+X(i)+'" y1="'+Y(-7)+'" x2="'+X(i)+'" y2="'+Y(5)+'" stroke="var(--grid)" stroke-width=".04"/>';
+  for(var j=-7;j<=5;j++) g+='<line x1="'+X(-5)+'" y1="'+Y(j)+'" x2="'+X(7)+'" y2="'+Y(j)+'" stroke="var(--grid)" stroke-width=".04"/>';
+  g+='<line x1="'+X(-5)+'" y1="'+Y(0)+'" x2="'+X(7)+'" y2="'+Y(0)+'" stroke="var(--ink)" stroke-width=".08"/><line x1="'+X(0)+'" y1="'+Y(-7)+'" x2="'+X(0)+'" y2="'+Y(5)+'" stroke="var(--ink)" stroke-width=".08"/>';
+  var A=[6,4],B=[-4,1],C=[0,-6];
+  function P(p){ return X(p[0])+','+Y(p[1]); }
+  g+='<polygon points="'+P(A)+' '+P(B)+' '+P([-4,4])+'" fill="var(--gold2)" opacity=".9"/>';
+  g+='<polygon points="'+P(B)+' '+P(C)+' '+P([-4,-6])+'" fill="var(--grass2)" opacity=".8"/>';
+  g+='<polygon points="'+P(C)+' '+P(A)+' '+P([6,-6])+'" fill="var(--rasp2)" opacity=".7"/>';
+  g+='<rect x="'+X(-4)+'" y="'+Y(4)+'" width="10" height="10" fill="none" stroke="var(--ink)" stroke-width=".08" stroke-dasharray=".3 .2"/>';
+  g+='<polygon points="'+P(A)+' '+P(B)+' '+P(C)+'" fill="none" stroke="var(--ink)" stroke-width=".12"/>';
+  g+=txt(X(6)+0.3,Y(4)+0.2,'A',.6,'start')+txt(X(-4)-0.2,Y(1)+0.2,'B',.6,'end')+txt(X(0),Y(-6)+0.9,'C',.6,'middle');
+  return svgWrap('-0.5 -1 15 14', g, '三角形ABCとまわりの長方形');
+}
+function typeFigPer(){
+  var g='';
+  for(var i=0;i<4;i++){ g+=block(0.3+i*2.2,0.9,2,'var(--grass)','var(--grass2)'); g+=txt(1.3+i*2.2,2.15,'200',.65,'middle','#fff'); }
+  g+='<path d="M0.3 3.3 Q0.3 3.8 0.8 3.8 L4 3.8 Q4.6 3.8 4.6 4.3 Q4.6 3.8 5.2 3.8 L8.4 3.8 Q8.9 3.8 8.9 3.3" fill="none" stroke="var(--ink)" stroke-width=".1"/>';
+  g+=txt(4.6,5.1,'200 × 4 = 800',.75,'middle','var(--good)');
+  g+=txt(4.6,0.6,'1分あたり 200m が 4つ分',.6);
+  return svgWrap('0 0 9.2 5.6', g, '1つあたりの型の図');
+}
+function typeFigAll(){
+  var g='';
+  for(var r=0;r<6;r++) for(var c=0;c<4;c++) g+=block(0.2+c*0.6,0.8+r*0.6,0.6,'var(--stone)','var(--stone2)');
+  g+=txt(1.4,0.55,'4 × 6',.55);
+  g+=txt(3.55,3.2,'→',1,'middle','var(--ink)');
+  for(r=0;r<3;r++) for(c=0;c<8;c++) g+=block(4.3+c*0.6,2.6+r*0.6,0.6,'var(--grass)','var(--grass2)');
+  g+=txt(6.7,2.35,'8 × ？',.55);
+  g+=txt(4.6,5.3,'全体 24 ÷ 8 = 3',.75,'middle','var(--good)');
+  return svgWrap('0 0 9.2 5.8', g, '全体の型の図');
+}
+function typeFigGraph(){
+  var g='', X=function(x){return 1+x*0.75;}, Y=function(y){return 4.6-y*0.0016;};
+  for(var i=0;i<=10;i++) g+='<line x1="'+X(i)+'" y1="'+Y(0)+'" x2="'+X(i)+'" y2="'+Y(2400)+'" stroke="var(--grid)" stroke-width=".03"/>';
+  for(var j=0;j<=2400;j+=400) g+='<line x1="'+X(0)+'" y1="'+Y(j)+'" x2="'+X(10)+'" y2="'+Y(j)+'" stroke="var(--grid)" stroke-width=".03"/>';
+  g+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(10.2)+'" y2="'+Y(0)+'" stroke="var(--ink)" stroke-width=".08"/><line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+Y(2500)+'" stroke="var(--ink)" stroke-width=".08"/>';
+  g+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(10)+'" y2="'+Y(2000)+'" stroke="var(--grass)" stroke-width=".14"/>';
+  g+='<line x1="'+X(10)+'" y1="'+Y(0)+'" x2="'+X(10)+'" y2="'+Y(2000)+'" stroke="var(--gold)" stroke-width=".08" stroke-dasharray=".2 .15"/>';
+  g+='<line x1="'+X(0)+'" y1="'+Y(2000)+'" x2="'+X(10)+'" y2="'+Y(2000)+'" stroke="var(--gold)" stroke-width=".08" stroke-dasharray=".2 .15"/>';
+  g+='<circle cx="'+X(10)+'" cy="'+Y(2000)+'" r=".22" fill="var(--gold)" stroke="var(--line)" stroke-width=".06"/>';
+  g+=txt(X(10),Y(0)+0.55,'10',.45)+txt(X(0)-0.15,Y(2000)+0.15,'2000',.45,'end');
+  g+=txt(X(5),Y(2000)-0.25,'ぴったり通る点 (10, 2000)',.5);
+  g+=txt(4.9,5.6,'a = 2000 ÷ 10 = 200',.65,'middle','var(--good)');
+  return svgWrap('-0.6 0 10.4 6', g, 'グラフを読む型の図');
+}
+function flowStrip(stopAt){
+  var steps=['型','式','計算','単位','答えの文'], g='', gap=0.6, x=0.1, xs=null;
+  steps.forEach(function(st,i){
+    var w = i===steps.length-1 ? 2.8 : 1.8, cut = stopAt!=null && i>stopAt, last=i===steps.length-1;
+    if(stopAt!=null && i===stopAt+1) xs = x-gap/2;
+    g+='<rect x="'+x+'" y="0.3" width="'+w+'" height="1.1" rx=".15" fill="'+(cut?'var(--paper)':(last?'var(--gold)':'var(--card)'))+'" stroke="var(--line)" stroke-width=".07"'+(cut?' stroke-dasharray=".15 .12" opacity=".55"':'')+'/>';
+    g+=txt(x+w/2,1.05,st,.55,'middle',last&&!cut?'#1D2B3A':'var(--ink)');
+    if(i<steps.length-1) g+=txt(x+w+gap/2,1.02,'→',.42,'middle','var(--sub)');
+    x += w+gap;
+  });
+  if(xs!=null) g+='<line x1="'+xs+'" y1="0" x2="'+xs+'" y2="1.7" stroke="var(--rasp)" stroke-width=".12"/>'+txt(xs+0.2,2.15,'ここで止まる ✕',.55,'start','var(--rasp)');
+  return svgWrap('0 0 '+(x-gap+0.2).toFixed(2)+' '+(stopAt!=null?'2.4':'1.6'), g, stopAt!=null?'途中で止まる悪い例':'最後まで解くいい例');
+}
+function typeCard(num, title, sub, opBadge, fig, rule, ex){
+  return '<div style="border:2px solid var(--line);border-radius:6px;padding:10px;margin:8px 0;background:var(--card)">'+
+    '<div class="row" style="flex-wrap:nowrap;gap:8px;align-items:center"><span class="pix" style="flex:0 0 auto;width:42px;height:42px;border:2px solid var(--line);border-radius:6px;display:grid;place-items:center;font-size:26px;background:var(--gold);color:#1D2B3A">'+opBadge+'</span>'+
+    '<div style="line-height:1.35"><b>'+num+' '+title+'</b><br><span class="prog">'+sub+'</span></div></div>'+
+    '<div style="margin:6px 0">'+fig+'</div>'+
+    '<div>'+rule+'</div><div class="prog">'+ex+'</div></div>';
+}
+var WPCARD1 = '<h3 style="margin:0 0 4px">文章題は3つの型</h3><p class="prog" style="margin:0">まず「どの型か」を決める。型が決まれば、かけるか・わるかが決まる。</p>'+
+  typeCard('①','1つあたりの型','比例：変わらないのは「1つあたり」','×', typeFigPer(), '→ 1つあたりを出して、<b>かける</b>。', '例：1分で200m → 4分なら 200 × 4')+
+  typeCard('②','全体の型','反比例：変わらないのは「全体」','÷', typeFigAll(), '→ 全体を出して、<b>わる</b>。', '例：4人で6日 → 全体24 → 8人なら 24 ÷ 8')+
+  typeCard('③','グラフを読む型','数がグラフに書いてある','点', typeFigGraph(), '→ ぴったり通る点から a を出して式にし、聞かれた数を入れる。', '例：(10, 2000) → a = 200 → y = 200x')+
+  '<div class="ex bad"><span class="tag">悪い例</span>　出てきた数をとりあえずかけたりわったりして、途中の数が出たところで止める。'+flowStrip(2)+'</div>'+
+  '<div class="ex good"><span class="tag">いい例</span>　型を決める → 式 → 計算 → 単位 → <b>答えの文</b>まで書く。'+flowStrip(null)+'</div>';
+function isSlot(s){ return /[①②③④]/.test(String(s)); }
+function lab(x,y,s,size,anchor){ return txt(x,y,s,size,anchor,isSlot(s)?'var(--rasp)':'var(--ink)'); }
+/* テープ図（1つあたりの型） */
+function tapeFig(o){
+  var n=o.n, bw=2, gap=0.2, inner=n*(bw+gap)-gap, W=Math.max(inner+0.8, 9.2), x0=(W-inner)/2, g='';
+  if(o.head) g+=txt(W/2,0.6,o.head,.6);
+  for(var i=0;i<n;i++){
+    var hl = o.hl!=null && i<o.hl;
+    g+=block(x0+i*(bw+gap),0.9,bw,hl?'var(--gold)':'var(--grass)',hl?'var(--gold2)':'var(--grass2)');
+    g+=txt(x0+i*(bw+gap)+bw/2,2.0,o.top,.6,'middle',hl?'#1D2B3A':'#fff');
+    if(o.sub) g+=txt(x0+i*(bw+gap)+bw/2,2.6,o.sub,.5,'middle',hl?'#1D2B3A':'#fff');
+  }
+  if(o.brace){
+    var a=x0, b=x0+inner, m=(a+b)/2;
+    g+='<path d="M'+a+' 3.2 Q'+a+' 3.7 '+(a+0.5)+' 3.7 L'+(m-0.5)+' 3.7 Q'+m+' 3.7 '+m+' 4.2 Q'+m+' 3.7 '+(m+0.5)+' 3.7 L'+(b-0.5)+' 3.7 Q'+b+' 3.7 '+b+' 3.2" fill="none" stroke="var(--ink)" stroke-width=".1"/>';
+    g+=lab(m,5.0,o.brace,.7);
+  }
+  return svgWrap('0 0 '+W.toFixed(2)+' 5.5', g, 'テープ図');
+}
+/* 長方形の面積図（全体の型） */
+function areaFig(L,R,head){
+  var g='';
+  if(head) g+=txt(6.3,0.6,head,.66,'middle','var(--good)');
+  g+='<rect x="0.9" y="1" width="3" height="4" fill="var(--stone2)" stroke="var(--line)" stroke-width=".08"/>';
+  g+='<rect x="6.3" y="2.6" width="5" height="2.4" fill="var(--grass2)" stroke="var(--line)" stroke-width=".08"/>';
+  g+=lab(2.4,3.25,L.a,.8)+lab(0.7,3.2,L.h,.7,'end')+lab(2.4,5.85,L.w,.7);
+  g+=lab(8.8,4.05,R.a,.8)+lab(11.5,4.05,R.h,.7,'start')+lab(8.8,5.85,R.w,.7);
+  return svgWrap('-2.6 0 17.2 6.3', g, '長方形の面積図');
+}
+/* 秒のテープ */
+function secFig(){
+  var g='', parts=[[60,'60秒'],[60,'60秒'],[5,'5秒']], x=0.4;
+  parts.forEach(function(p,i){
+    var w=p[0]/60*4.2;
+    g+='<rect x="'+x+'" y="0.8" width="'+w+'" height="1.4" fill="'+(i<2?'var(--grass2)':'var(--gold2)')+'" stroke="var(--line)" stroke-width=".07"/>';
+    g+=txt(x+w/2,(i<2?1.7:2.9),p[1],.55);
+    x+=w;
+  });
+  g+=txt(4.6,3.9,'125秒 ＝ 1分 ＋ 1分 ＋ 5秒',.6,'middle','var(--good)');
+  return svgWrap('0 0 9.6 4.4', g, '秒のテープ');
+}
+/* マラソンのグラフ */
+function figRace(mark, ext){
+  ext = ext||{};
+  var X=function(x){return 1.6+x*1.1;}, Y=function(y){return 12.6-y/200;};
+  var g='';
+  for(var i=0;i<=10;i++) g+='<line x1="'+X(i)+'" y1="'+Y(0)+'" x2="'+X(i)+'" y2="'+Y(2000)+'" stroke="var(--grid)" stroke-width=".04"/>';
+  for(var j=0;j<=2000;j+=200) g+='<line x1="'+X(0)+'" y1="'+Y(j)+'" x2="'+X(10)+'" y2="'+Y(j)+'" stroke="'+(j%1000===0?'var(--grid5)':'var(--grid)')+'" stroke-width=".04"/>';
+  g+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(10.6)+'" y2="'+Y(0)+'" stroke="var(--ink)" stroke-width=".1"/><line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+Y(2150)+'" stroke="var(--ink)" stroke-width=".1"/>';
+  [0,5,10].forEach(function(v){ g+=txt(X(v),Y(0)+0.9,v,.6); });
+  [1000,2000].forEach(function(v){ g+=txt(X(0)-0.2,Y(v)+0.2,v,.6,'end'); });
+  g+=txt(X(10.6),Y(0)-0.3,'x(分)',.55,'end')+txt(X(0)+0.2,Y(2150),'y(m)',.55,'start');
+  if(ext.range) g+='<line x1="'+X(0)+'" y1="'+(Y(0)+0.25)+'" x2="'+X(10)+'" y2="'+(Y(0)+0.25)+'" stroke="var(--gold)" stroke-width=".35"/>'+txt(X(5),Y(0)+1.55,'0 ≦ x ≦ 10（ゴールまでの時間）',.55,'middle','var(--good)');
+  if(ext.noBro!==true) g+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(8)+'" y2="'+Y(2000)+'" stroke="var(--rasp)" stroke-width=".14"/>'+txt(X(8),Y(2000)-0.3,'兄',.6,'middle','var(--rasp)');
+  g+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(10)+'" y2="'+Y(2000)+'" stroke="var(--grass)" stroke-width=".14"/>'+txt(X(10)+0.2,Y(2000)-0.3,'ななみ',.6,'start','var(--grass)');
+  if(ext.step){
+    g+='<polyline points="'+X(0)+','+Y(0)+' '+X(1)+','+Y(0)+' '+X(1)+','+Y(200)+'" fill="none" stroke="var(--gold)" stroke-width=".14"/>';
+    g+='<polyline points="'+X(1)+','+Y(200)+' '+X(2)+','+Y(200)+' '+X(2)+','+Y(400)+'" fill="none" stroke="var(--gold)" stroke-width=".14"/>';
+    g+=txt(X(2.2),Y(150),'1分ごとに 200m',.55,'start','var(--good)');
+  }
+  if(ext.diff){
+    g+='<line x1="'+(X(4)+0.35)+'" y1="'+Y(1000)+'" x2="'+(X(4)+0.35)+'" y2="'+Y(800)+'" stroke="var(--ink)" stroke-width=".12"/>';
+    g+='<line x1="'+(X(4)+0.2)+'" y1="'+Y(1000)+'" x2="'+(X(4)+0.5)+'" y2="'+Y(1000)+'" stroke="var(--ink)" stroke-width=".1"/><line x1="'+(X(4)+0.2)+'" y1="'+Y(800)+'" x2="'+(X(4)+0.5)+'" y2="'+Y(800)+'" stroke="var(--ink)" stroke-width=".1"/>';
+    g+=txt(X(4)+0.7,Y(900)+0.2,'差',.6,'start','var(--good)');
+  }
+  (mark||[]).forEach(function(p){
+    if(p[2]) g+='<line x1="'+X(p[0])+'" y1="'+Y(0)+'" x2="'+X(p[0])+'" y2="'+Y(2000)+'" stroke="var(--gold)" stroke-width=".08" stroke-dasharray=".25 .2"/>';
+    if(p[3]) g+='<line x1="'+X(0)+'" y1="'+Y(p[1])+'" x2="'+X(p[0])+'" y2="'+Y(p[1])+'" stroke="var(--gold)" stroke-width=".08" stroke-dasharray=".25 .2"/>'+((p[1]%1000)?txt(X(0)-0.2,Y(p[1])+0.2,p[1],.5,'end','var(--good)'):'');
+    g+='<circle cx="'+X(p[0])+'" cy="'+Y(p[1])+'" r=".25" fill="var(--gold)" stroke="var(--line)" stroke-width=".06"/>';
+  });
+  return svgWrap('-0.6 -0.2 15.6 '+(ext.range?'14.6':'13.8'), g, 'マラソンのグラフ');
+}
+/* 絵の型のサムネイル */
+function thumb(kind){
+  var g='';
+  if(kind==='tape'){ for(var i=0;i<3;i++) g+=block(0.4+i*1.6,1,1.4,'var(--grass)','var(--grass2)'); g+='<path d="M0.4 2.7 Q0.4 3.1 0.8 3.1 L2.4 3.1 Q2.8 3.1 2.8 3.5 Q2.8 3.1 3.2 3.1 L4.8 3.1 Q5.2 3.1 5.2 2.7" fill="none" stroke="var(--ink)" stroke-width=".1"/>'; }
+  if(kind==='area'){ g+='<rect x="0.6" y="0.6" width="2" height="3" fill="var(--stone2)" stroke="var(--line)" stroke-width=".08"/><rect x="3.1" y="1.9" width="2.4" height="1.7" fill="var(--grass2)" stroke="var(--line)" stroke-width=".08"/>'; }
+  if(kind==='graph'){ g+='<line x1="0.6" y1="3.6" x2="5.6" y2="3.6" stroke="var(--ink)" stroke-width=".1"/><line x1="0.6" y1="3.6" x2="0.6" y2="0.4" stroke="var(--ink)" stroke-width=".1"/><line x1="0.6" y1="3.6" x2="5" y2="0.8" stroke="var(--grass)" stroke-width=".16"/><circle cx="5" cy="0.8" r=".22" fill="var(--gold)" stroke="var(--line)" stroke-width=".06"/>'; }
+  var name = {tape:'テープ図',area:'長方形の図',graph:'グラフに点'}[kind];
+  return '<span style="display:inline-flex;flex-direction:column;align-items:center;gap:2px"><svg viewBox="0 0 6.2 4.2" style="width:96px;height:66px" aria-hidden="true">'+g+'</svg><span style="font-size:14px">'+name+'</span></span>';
+}
+var PICS = [thumb('tape'), thumb('area'), thumb('graph')];
+function ovenFig(a,b,c){ return areaFig({w:'500W',h:a,a:'500 × '+(a==='①'?'①':'150')},{w:'600W',h:c,a:b},'出力 × 時間 ＝ 全体（どちらも同じ広さ）'); }
+
+var TYP3 = ["1つあたりの型","全体の型","グラフを読む型"];
+var WPI = {
+ /* ===== 10/23 考え方：絵を「見る」「選ぶ」 ===== */
+ a1:{ref:"考え方", type:"card", html:WPCARD1},
+ a2:{ref:"p.92 大問1", type:"choice", q:"針金 20cm の重さは 3g。12g 使ったとき、長さは何cm？<br>この問題は、どの型？", opts:TYP3, c:0,
+     ex:"「3gあたり20cm」が変わらない。1つあたりの型。絵にするとこうなる。"+tapeFig({n:4,top:'3g',sub:'20cm',brace:'12g → ？cm'})},
+ a3:{ref:"p.93 大問2", type:"choice", q:"フェンスのペンキぬりは、4人で6日かかった。8人でぬると何日？<br>この問題は、どの型？", opts:TYP3, c:1,
+     ex:"人数 × 日数 ＝ 仕事全体が変わらない。全体の型。"+areaFig({w:'4人',h:'6日',a:'全体'},{w:'8人',h:'？日',a:'全体'},'たて × よこ ＝ 全体（同じ広さ）')},
+ a4:{ref:"p.92 大問3", type:"choice", q:"出力 500W の電子レンジで 2分30秒温めるお弁当。600W なら何分何秒？<br>この問題は、どの型？", opts:TYP3, c:1,
+     ex:"出力 × 時間 ＝ 温める量全体が変わらない。全体の型。"+areaFig({w:'500W',h:'2分30秒',a:'全体'},{w:'600W',h:'？',a:'全体'},'出力 × 時間 ＝ 全体')},
+ a5:{ref:"p.93 大問1", type:"choice", q:"ななみさんと兄が走ったようすをグラフに表した。4分後の2人の差は何m？<br>この問題は、どの型？", opts:TYP3, c:2,
+     ex:"数がグラフに書いてある。グラフを読む型。"+figRace([[4,1000,1],[4,800]],{diff:true})},
+ a6:{ref:"れんしゅう", type:"choice", q:"60L 入る水そうに、毎分 x L ずつ水を入れる。いっぱいになるまで y 分。<br>どの型？", opts:TYP3, c:1,
+     ex:"毎分の量 × 時間 ＝ 60L（全体）。全体の型。"+areaFig({w:'毎分6L',h:'10分',a:'60L'},{w:'毎分12L',h:'？分',a:'60L'},'毎分の量 × 時間 ＝ 全体')},
+ a7:{ref:"れんしゅう", type:"choice", q:"時速 40km の車で 3時間走ると、何km 進む？<br>どの型？", opts:TYP3, c:0,
+     ex:"1時間あたり 40km が変わらない。1つあたりの型。"+tapeFig({n:3,top:'40km',sub:'1時間',brace:'40 × 3 = ？km'})},
+ a8:{ref:"絵を選ぶ", type:"choice", q:"<b>電子レンジ</b>の問題（500W で 2分30秒 → 600W なら？）に合う絵はどれ？", opts:PICS, c:1,
+     ex:"全体の型は長方形の図。たて（時間）× よこ（出力）＝ 全体。"},
+ a9:{ref:"絵を選ぶ", type:"choice", q:"<b>針金</b>の問題（20cm で 3g → 12g なら何cm？）に合う絵はどれ？", opts:PICS, c:0,
+     ex:"1つあたりの型はテープ図。同じ大きさのブロックを並べる。"},
+ a10:{ref:"絵を選ぶ", type:"choice", q:"<b>マラソン</b>の問題（グラフから4分後の差）に合う絵はどれ？", opts:PICS, c:2,
+     ex:"グラフを読む型は、ぴったり通る点に●をつけ、聞かれたところに点線を引く。"},
+ a11:{ref:"p.92 大問3", type:"order", q:"電子レンジの問題を解く順番に、上から押して並べよう。", fig:areaFig({w:'500W',h:'150秒',a:'75000'},{w:'600W',h:'？秒',a:'75000'},'出力 × 時間 ＝ 全体'),
+     opts:["型を決める：全体の型","2分30秒を秒になおす：150秒","全体を出す：500 × 150 = 75000","わる：75000 ÷ 600 = 125（秒）","単位をもどす：125秒 = 2分5秒","答えの文：2分5秒温めればよい"],
+     ex:"型 → 単位をそろえる → 全体 → わる → 単位をもどす → 答えの文。125 で止めると「解き切っていない」。"},
+ a12:{ref:"p.93 大問2", type:"order", q:"フェンスの問題（4人で6日 → 8人なら？）を解く順番に並べよう。", fig:areaFig({w:'4人',h:'6日',a:'24'},{w:'8人',h:'？日',a:'24'},'たて × よこ ＝ 全体'),
+     opts:["型を決める：全体の型","全体を出す：4 × 6 = 24","わる：24 ÷ 8 = 3","答えの文：3日間かかる"], ex:"全体の型は「全体を出して、わる」。"},
+ a13:{ref:"p.93 大問1(3)", type:"choice", q:"「スタートして4分後の、2人の道のりの差は何m？」<br>最後まで解き切っている答えはどれ？", fig:figRace([[4,1000,1,1],[4,800,0,1]],{diff:true}),
+     opts:["800m","1000m","1000 − 800 = 200 で、200m"], c:2, ex:"800（ななみさん）と1000（兄）は途中の数。聞かれているのは「差」なので、ひき算まで。"},
+
+ /* ===== 10/24 1つあたり・全体：絵を「完成させる」→ 最後は「自分で描く」 ===== */
+ b1:{ref:"きょうのやり方", type:"card", html:'<b>きょうは、絵を完成させてから解く</b><p>1つあたりの型は <b>テープ図</b>、全体の型は <b>長方形の図</b>。赤い ①②③ のところに数を入れて、絵を完成させよう。最後の問題は、自分で絵を描く。</p><div class="row" style="gap:14px">'+thumb('tape')+thumb('area')+'</div>'},
+ b2:{ref:"p.92 大問1(1)", ctx:"針金 20cm の重さは 3g。かざりに使った針金は 12g。", type:"build", unit:3, unitName:"g", top:"3g", sub:"20cm", target:12,
+     q:"「3g・20cm」のブロックを、合計が 12g になるまで並べよう。", ex:"3g × 4 = 12g。ブロックは4つ。"},
+ b3:{ref:"p.92 大問1(1)", ctx:"針金 20cm の重さは 3g。かざりに使った針金は 12g。", fig:tapeFig({n:4,top:'3g',sub:'20cm',brace:'12g → ①cm'}), got:"ブロックは4つ（12g は 3g の 4倍）", type:"num", q:"絵の ① は何cm？", ans:80, ex:"20cm が 4つ分。20 × 4 = 80。80cm。"},
+ b4:{ref:"p.92 大問1(2)", prev:"空欄", ctx:"(1) では「針金の重さ」と「針金の長さ」の間に、どんな関係があることを使った？", fig:tapeFig({n:4,top:'3g',sub:'20cm',brace:'重さ 4倍 → 長さも 4倍',hl:4}), type:"choice", q:"書く文として正しいのは？",
+     opts:["針金の長さは、針金の重さに比例する","針金の長さは、針金の重さに反比例する","針金の長さと重さをたすと、いつも同じになる"], c:0,
+     ex:"重さが4倍になると長さも4倍。記述は「〇〇は △△に比例する」の形で書く。ワークにもこの文を書こう。"},
+ b5:{ref:"全体の型", type:"card", html:'<b>全体の型は長方形の図</b><p>たて × よこ ＝ 全体。24個のブロックの長方形と同じ。2つの長方形は<b>広さが同じ</b>。</p>', fig:areaFig({w:'4人',h:'6日',a:'24'},{w:'8人',h:'3日',a:'24'},'どちらも全体は 24')},
+ b6:{ref:"p.92 大問3(1)", prev:"空欄", ctx:"出力 500W で 2分30秒温めるお弁当を、600W で温める。", fig:ovenFig('①','②','③'), type:"num", q:"絵の ① は何秒？（2分30秒を秒になおす）", ans:150, ex:"60 × 2 + 30 = 150。150秒。"},
+ b7:{ref:"p.92 大問3(1)", ctx:"出力 500W で 2分30秒温めるお弁当を、600W で温める。", fig:ovenFig('150秒','②','③'), got:"① = 150秒", type:"num", q:"絵の ② 全体は？　500 × 150 = ？", ans:75000, ex:"500 × 150 = 75000。右の長方形も同じ 75000。"},
+ b8:{ref:"p.92 大問3(1)", ctx:"出力 500W で 2分30秒温めるお弁当を、600W で温める。", fig:ovenFig('150秒','75000','③'), got:"② = 75000", type:"num", q:"絵の ③ は何秒？　75000 ÷ 600 = ？", ans:125, ex:"75000 ÷ 600 = 125。125秒。"},
+ b9:{ref:"p.92 大問3(1)", ctx:"出力 500W で 2分30秒温めるお弁当を、600W で温める。", fig:secFig(), got:"③ = 125秒", type:"nums", q:"単位をもどそう。125秒は何分何秒？", labels:["分","秒"], ans:[2,5], ex:"60秒が2つと5秒。2分5秒。"},
+ b10:{ref:"p.92 大問3(1)", ctx:"何分何秒温めればよい？", fig:flowStrip(null), got:"125秒 = 2分5秒", type:"choice", q:"答えとして書くのは？", opts:["2分5秒温めればよい","125","75000"], c:0, ex:"聞かれているのは「何分何秒」。125 と 75000 は途中の数。"},
+ b11:{ref:"p.92 大問3(2)", prev:"空欄", ctx:"出力を x W、温める時間を y 秒とする。", fig:areaFig({w:'500W',h:'150秒',a:'75000'},{w:'x W',h:'y 秒',a:'①'},'出力 × 時間 ＝ 全体'), type:"num", q:"y = ① / x の ① は？", ans:75000, ex:"全体はいつも 75000。y = 75000 / x。たしかめ：x = 1000 なら 75秒 = 1分15秒（表と同じ）✓"},
+ b12:{ref:"れんしゅう", ctx:"リボン 30cm の重さは 4g。20g 使ったら、長さは何cm？", type:"choice", q:"まず絵を選ぼう。", opts:PICS, c:0, ex:"「4gあたり30cm」が変わらないので、テープ図。"},
+ b13:{ref:"れんしゅう", ctx:"リボン 30cm の重さは 4g。20g 使ったら、長さは何cm？", type:"build", unit:4, unitName:"g", top:"4g", sub:"30cm", target:20,
+     q:"「4g・30cm」のブロックを、合計 20g になるまで並べよう。", ex:"4g × 5 = 20g。ブロックは5つ。"},
+ b14:{ref:"れんしゅう", ctx:"リボン 30cm の重さは 4g。20g 使ったら、長さは何cm？", fig:tapeFig({n:5,top:'4g',sub:'30cm',brace:'20g → ①cm'}), type:"num", q:"① は何cm？", ans:150, ex:"30cm が 5つ分。30 × 5 = 150cm。"},
+ b15:{ref:"れんしゅう", ctx:"3人で 12日かかる仕事がある。9人でやると何日かかる？", fig:areaFig({w:'3人',h:'12日',a:'①'},{w:'9人',h:'②日',a:'①'},'人数 × 日数 ＝ 全体'), type:"nums", q:"絵の ① と ② をうめよう。", labels:["①","②"], ans:[36,4], ex:"① 全体 3 × 12 = 36、② 36 ÷ 9 = 4日。"},
+ b16:{ref:"自分で描く", ctx:"600W で 2分30秒温める冷凍食品を、1000W で温める。何分何秒？", type:"draw",
+     q:"<b>ノートに絵を描いてから</b>解こう。<br>1. 長方形を2つ描く<br>2. たて・よこに 出力 と 時間 を書く<br>3. 真ん中に「全体」と書く<br>描けたらボタンを押す。",
+     model:areaFig({w:'600W',h:'150秒',a:'90000'},{w:'1000W',h:'？秒',a:'90000'},'お手本'),
+     checks:["長方形を2つ描いた","たて・よこに 出力 と 時間 を書いた","2分30秒を 150秒 になおした","真ん中に 全体（90000）を書いた"]},
+ b17:{ref:"自分で描く", ctx:"600W で 2分30秒温める冷凍食品を、1000W で温める。", got:"全体 600 × 150 = 90000", type:"nums", q:"自分の絵で解こう。何分何秒？", labels:["分","秒"], ans:[1,30], ex:"90000 ÷ 1000 = 90秒 → 1分30秒。"},
+
+ /* ===== 10/25 グラフ・図形：絵に「描き足す」→「自分で描く」 ===== */
+ c1:{ref:"グラフを読む型", type:"card", html:'<b>グラフを読む型の順番</b><ol style="margin:6px 0 0;padding-left:1.4em"><li>マス目にぴったり通る点に <b>●</b> をつける</li><li>a = y ÷ x</li><li>式 y = ax にする</li><li>聞かれた x のところに <b>縦の点線</b> を引く</li><li>答えの文まで書く</li></ol><p class="prog">きょうは、ワークのグラフにも ● と点線を自分で描きながら進める。</p>', fig:figRace([[10,2000,1,1]])},
+ c2:{ref:"p.93 大問1(1)", ctx:"ななみさんは x 分後にスタート地点から y m 進む。", fig:figRace([[10,2000,1,1]],{noBro:true}), type:"num", q:"ななみさんのグラフは x = 10 のとき y = ？", ans:2000, ex:"10分でゴールの 2000m。点 (10, 2000) を通る。"},
+ c3:{ref:"p.93 大問1(1)", ctx:"ななみさんのグラフは点 (10, 2000) を通る。", fig:figRace([[10,2000,1,1]],{noBro:true}), got:"点 (10, 2000)", type:"num", q:"a = 2000 ÷ 10 = ？", ans:200, ex:"a = 200。式は y = 200x。"},
+ c4:{ref:"p.93 大問1(1)", ctx:"ななみさんの式は y = 200x。", fig:figRace([[10,2000,1]],{range:true,noBro:true}), type:"choice", q:"x の変域は？（黄色い太線を見よう）", opts:["0 ≦ x ≦ 10","0 ≦ x ≦ 2000","x ≧ 0"], c:0, ex:"x は時間（横）。ななみさんは 0分から 10分（ゴール）まで。2000 は y（たて）の数。"},
+ c5:{ref:"p.93 大問1(2)", ctx:"ななみさんの式は y = 200x。", fig:figRace([],{step:true,noBro:true}), type:"choice", q:"比例定数 200 が表している量は？（黄色い階段を見よう）", opts:["ななみさんが1分間に進む道のり","ななみさんがゴールするまでの時間","2人の道のりの差"], c:0, ex:"1分進むごとに 200m 上がる。比例の a は「1つあたり」＝ 1分あたりの道のり。"},
+ c6:{ref:"p.93 大問1(3)", ctx:"兄は 8分で 2000m 走ってゴールした。", fig:figRace([[8,2000,1,1]]), type:"num", q:"兄の a = 2000 ÷ 8 = ？", ans:250, ex:"a = 250。兄の式は y = 250x。"},
+ c7:{ref:"自分で描く", ctx:"スタートして4分後の、2人の道のりの差は何m？", type:"draw",
+     q:"<b>ワークのグラフに描き足そう。</b><br>1. x = 4 のところに縦の点線<br>2. 2本の線と交わるところに ●<br>3. 2つの ● の間に「差」のかっこ<br>描けたらボタンを押す。",
+     model:figRace([[4,1000,1,1],[4,800,0,1]],{diff:true}),
+     checks:["x = 4 に縦の点線を引いた","兄とななみさんの線に ● をつけた","2つの ● の間に「差」を書いた"]},
+ c8:{ref:"p.93 大問1(3)", ctx:"ななみさん y = 200x、兄 y = 250x。", fig:figRace([[4,1000,1,1],[4,800,0,1]],{diff:true}), type:"nums", q:"4分後の道のりと、その差は？", labels:["兄（m）","ななみさん（m）","差（m）"], ans:[1000,800,200], ex:"250 × 4 = 1000、200 × 4 = 800、1000 − 800 = 200m。"},
+ c9:{ref:"p.93 大問1(4)", prev:"1800m", ctx:"兄がゴールしたとき、ななみさんはスタートから何mの地点を通過した？", fig:figRace([[8,2000,1]]), type:"num", q:"兄がゴールしたのは何分後？（兄の線のはしを見よう）", ans:8, ex:"兄は 8分でゴール。まずこの「時間」を出すのが1ステップ目。"},
+ c10:{ref:"p.93 大問1(4)", ctx:"兄がゴールしたとき、ななみさんはスタートから何mの地点を通過した？", got:"兄のゴールは 8分後", fig:figRace([[8,2000,1],[8,1600,0,1]]), type:"num", q:"x = 8 の点線とななみさんの線が交わるところ。200 × 8 = ？", ans:1600, ex:"200 × 8 = 1600。前の答え 1800 は、兄とまちがえたか、読み取りがずれた。"},
+ c11:{ref:"p.93 大問1(4)", ctx:"兄がゴールしたとき、ななみさんはスタートから何mの地点を通過した？", got:"200 × 8 = 1600", fig:flowStrip(null), type:"choice", q:"答えとして書くのは？", opts:["スタートから 1600m の地点","1600","8分後"], c:0, ex:"聞かれ方に合わせて「〇〇mの地点」まで書く。"},
+ c12:{ref:"p.83 大問2", prev:"定規で測って 1.575cm²", type:"card", html:'<b>座標の三角形の面積は「囲んで引く」</b><div class="ex bad"><span class="tag">悪い例</span>　定規で長さを測ってかける（ななめの長さは方眼では測れない）。</div><div class="ex good"><span class="tag">いい例</span>　まわりを長方形で囲む → 長方形から、まわりの3つの直角三角形を引く。</div>', fig:figTri()},
+ c13:{ref:"自分で描く", ctx:"A(6, 4)、B(−4, 1)、C(0, −6) の三角形。", type:"draw",
+     q:"<b>ワークの図に描き足そう。</b><br>1. 3つの点をぜんぶ囲む長方形を点線で描く<br>2. まわりにできた直角三角形に、底辺と高さの数を書く<br>描けたらボタンを押す。",
+     model:figTri(), checks:["3つの点をぜんぶ囲む長方形を描いた","長方形の角は方眼のマス目の上にある","まわりの直角三角形3つに、底辺と高さを書いた"]},
+ c14:{ref:"p.83 大問2", ctx:"A(6, 4)、B(−4, 1)、C(0, −6)。点線の長方形で囲む。", fig:figTri(), type:"num", q:"まわりの長方形の面積は？（よこ：−4 から 6、たて：−6 から 4）", ans:100, ex:"よこ 10、たて 10 で 100cm²。"},
+ c15:{ref:"p.83 大問2", ctx:"A(6, 4)、B(−4, 1)、C(0, −6)。", fig:figTri(), got:"長方形は 100", type:"nums", q:"色のついた3つの直角三角形の面積は？（底辺 × 高さ ÷ 2）", labels:["黄（上）","緑（左下）","赤（右下）"], ans:[15,14,30], ex:"黄 10 × 3 ÷ 2 = 15、緑 4 × 7 ÷ 2 = 14、赤 6 × 10 ÷ 2 = 30。"},
+ c16:{ref:"p.83 大問2", prev:"1.575cm²", ctx:"A(6, 4)、B(−4, 1)、C(0, −6)。", got:"長方形 100、三角形 15・14・30", type:"num", q:"三角形 ABC の面積は？", ans:41, ex:"100 − (15 + 14 + 30) = 41。41cm²。"},
+ c17:{ref:"まとめ", type:"card", html:'<b>これからは、ワークに絵を描いてから解く</b><div class="cmp" style="grid-template-columns:1fr"><div class="row" style="flex-wrap:nowrap">'+thumb('tape')+'<span>1つあたりの型：同じブロックを並べる。いくつ分かを数えて <b>かける</b>。</span></div><div class="row" style="flex-wrap:nowrap">'+thumb('area')+'<span>全体の型：長方形を2つ。広さ（全体）が同じ。全体を出して <b>わる</b>。</span></div><div class="row" style="flex-wrap:nowrap">'+thumb('graph')+'<span>グラフ：ぴったり点に ●、聞かれたところに点線。</span></div></div>'}
+};
+for(var wk in WPI){ FIX[wk] = WPI[wk]; }
+function idsOf(prefix){ return Object.keys(WPI).filter(function(k){ return k.charAt(0)===prefix; }); }
+var WPDAYS = [
+  {label:"10/23 考え方", ids:idsOf("a")},
+  {label:"10/24 1つあたり・全体", ids:idsOf("b")},
+  {label:"10/25 グラフ・図形", ids:idsOf("c")}
+];
+
+function freshDays(DAYS){ return {day:0, days:DAYS.map(function(d){ return {q:d.ids.map(function(id){return {id:id};}), pos:0, cur:null, done:false, again:[]}; })}; }
+function freshFix(){ return freshDays(FIXDAYS); }
 function fixItem(e){
   if(e.gen) return e.gen;
   var it = FIX[e.id];
@@ -704,18 +954,21 @@ function newCur(it){
   var c = {res:null, vals:[], sel:[], pick:null, mPick:null, aIn:"", aOK:null};
   if(it.type==="choice") c.ord = shuffle(it.opts.length);
   if(it.type==="formula") c.ord = shuffle(2);
+  if(it.type==="order"){ c.ord = shuffle(it.opts.length); c.seq = []; }
+  if(it.type==="build"){ c.n = 1; }
+  if(it.type==="draw"){ c.drawn = false; c.chk = []; }
   return c;
 }
-function stage7(){
-  var F=S.fix, D=F.days[F.day];
-  var h = '<h2>ワークの直し</h2>';
-  h += '<div class="opts" style="margin:4px 0 10px">'+FIXDAYS.map(function(d,i){
+function dayStage(F, DAYS, title, intro, doneHTML){
+  var D=F.days[F.day];
+  var h = '<h2>'+title+'</h2>';
+  h += '<div class="opts" style="margin:4px 0 10px">'+DAYS.map(function(d,i){
     return '<button type="button" class="btn" data-fday="'+i+'"'+(i===F.day?' style="background:var(--gold);color:#1D2B3A"':'')+'>'+d.label+(F.days[i].done?' ✓':'')+'</button>';
   }).join('')+'</div>';
-  h += '<p class="once">前に書いた答えを見て、どこがちがうかを考えてから解き直す。答えは1回だけ。まちがえた問題は、あとでもう一度出る。</p>';
+  h += '<p class="once">'+intro+'</p>';
   if(D.done){
-    h += '<div class="msg ok">この日の直しは終わり。<br><b>紙でやること：</b>ワークの×の横に、正しい答えを自分で書こう（式を書く問題は「aは○○」から）。</div>';
-    h += '<p>直したところ：'+FIXDAYS[F.day].ids.map(function(id){return FIX[id].ref;}).filter(function(v,i,a){return a.indexOf(v)===i;}).join('、')+'</p>';
+    h += '<div class="msg ok">'+doneHTML+'</div>';
+    h += '<p>やったところ：'+DAYS[F.day].ids.map(function(id){return FIX[id].ref;}).filter(function(v,i,a){return a.indexOf(v)===i && /^p\./.test(v);}).join('、')+'</p>';
     h += '<button type="button" class="btn" data-fx="redo">この日をもう一度</button>';
     return h + '<div class="foot"><button type="button" class="btn" data-go="1">ブロックで考えるへ</button></div>';
   }
@@ -724,12 +977,55 @@ function stage7(){
   var c = D.cur;
   h += '<p class="prog">'+(D.pos+1)+' 問目 ／ のこり '+(D.q.length-D.pos)+' 問'+(e.again?'　<b>（もう一度）</b>':'')+'</p>';
   h += '<div class="row"><span style="border:2px solid var(--line);border-radius:4px;padding:0 8px;font-weight:700">'+it.ref+'</span></div>';
-  if(!e.gen) h += '<div class="ex bad"><span class="tag">前に書いた答え</span>　'+it.prev+'</div>';
+  if(!e.gen && it.prev) h += '<div class="ex bad"><span class="tag">前に書いた答え</span>　'+it.prev+'</div>';
+  if(it.ctx) h += '<div class="sit" style="border-left-color:var(--dirt)">'+it.ctx+'</div>';
+  if(it.fig) h += '<div class="board" style="padding:6px;background:var(--card)">'+it.fig+'</div>';
+  if(it.got) h += '<div class="msg ok" style="font-size:15px;padding:6px 10px">ここまで：'+it.got+'</div>';
   var lock = c.res!==null;
+  if(it.type==="card"){
+    h += '<div class="howto">'+it.html+'</div>';
+    h += '<button type="button" class="btn main" data-fx="card">わかった、次へ</button>';
+  }
+  if(it.type==="nums"){
+    h += '<div class="sit">'+it.q+'</div><div class="row">';
+    it.labels.forEach(function(lb,i){
+      var bad = lock && !same(parseNum(c.vals[i]), it.ans[i]);
+      h += '<label style="display:inline-flex;align-items:center;gap:6px">'+lb+' <input id="fxn'+i+'" class="num s'+(bad?' bad':'')+'" inputmode="text" autocomplete="off" value="'+(c.vals[i]||"")+'"'+(lock?' disabled':'')+'></label>';
+    });
+    h += '</div>'+(lock?'':'<div style="margin-top:8px"><button type="button" class="btn main" data-fx="ok">決定</button></div>');
+  }
+  if(it.type==="build"){
+    h += '<div class="sit">'+it.q+'</div>';
+    h += '<div class="board" style="padding:6px;background:var(--card)">'+tapeFig({n:c.n, top:it.top, sub:it.sub, brace:'合計 '+(c.n*it.unit)+it.unitName+'（目標 '+it.target+it.unitName+'）'})+'</div>';
+    if(!lock) h += '<div class="row"><button type="button" class="btn sq" data-fx="bminus" aria-label="1つへらす"'+(c.n<=1?' disabled':'')+'>−</button><span class="big">'+c.n+'</span><span>こ</span><button type="button" class="btn sq" data-fx="bplus" aria-label="1つふやす"'+(c.n>=8?' disabled':'')+'>+</button><button type="button" class="btn main" data-fx="ok">決定</button></div>';
+  }
+  if(it.type==="draw"){
+    h += '<div class="sit">'+it.q+'</div>';
+    if(!c.drawn){
+      h += '<button type="button" class="btn main" data-fx="drawn">描けた</button><p class="once">絵はノートかワークに描く。描いてから押そう。</p>';
+    }else{
+      h += '<b>お手本と見くらべよう</b><div class="board" style="padding:6px;background:var(--card)">'+it.model+'</div>';
+      h += '<p style="margin:4px 0">自分の絵に入っていたものを押そう。</p><div class="opts tog" style="flex-direction:column;align-items:stretch">';
+      it.checks.forEach(function(ck,i){ var on=c.chk.indexOf(i)>=0; h += '<button type="button" class="btn" style="text-align:left;font-weight:400" data-fxk="'+i+'" aria-pressed="'+on+'">'+(on?'✓ ':'□ ')+ck+'</button>'; });
+      h += '</div><p class="prog">入っていなかったものは、自分の絵に描き足そう。</p>';
+    }
+  }
+  if(it.type==="order"){
+    h += '<div class="sit">'+it.q+'</div>';
+    h += '<ol style="margin:6px 0;padding-left:1.6em">'+c.seq.map(function(i,n){ var ok = lock ? (i===n) : null; return '<li style="margin:3px 0'+(ok===false?';color:var(--rasp);text-decoration:line-through':'')+'">'+it.opts[i]+'</li>'; }).join('')+'</ol>';
+    if(!lock){
+      h += '<div class="opts" style="flex-direction:column;align-items:stretch">';
+      c.ord.forEach(function(i){ if(c.seq.indexOf(i)<0) h += '<button type="button" class="btn" style="text-align:left;font-weight:400" data-fxo="'+i+'">'+it.opts[i]+'</button>'; });
+      h += '</div><div class="row" style="margin-top:8px">'+(c.seq.length?'<button type="button" class="btn" data-fx="oclear">並べ直す</button>':'')+
+           '<button type="button" class="btn main" data-fx="ok"'+(c.seq.length<it.opts.length?' disabled':'')+'>決定</button></div>';
+    }else if(!c.res){
+      h += '<div class="msg ok"><b>正しい順番</b><ol style="margin:4px 0 0;padding-left:1.4em">'+it.opts.map(function(o){return '<li>'+o+'</li>';}).join('')+'</ol></div>';
+    }
+  }
   if(it.type==="num"){
     h += '<div class="sit">'+it.q+'</div>';
-    h += '<div class="row"><input id="fxin" class="num" inputmode="text" autocomplete="off" placeholder="例 −1/4" value="'+(c.vals[0]||"")+'"'+(lock?' disabled':'')+'>'+(lock?'':'<button type="button" class="btn main" data-fx="ok">決定</button>')+'</div>';
-    if(!lock) h += '<p class="once">分数は 1/4、マイナスは − で入れる。</p>';
+    h += '<div class="row"><input id="fxin" class="num" inputmode="text" autocomplete="off" placeholder="" value="'+(c.vals[0]||"")+'"'+(lock?' disabled':'')+'>'+(lock?'':'<button type="button" class="btn main" data-fx="ok">決定</button>')+'</div>';
+    if(!lock && (it.ans<0 || it.ans!==Math.floor(it.ans))) h += '<p class="once">分数は 1/4、マイナスは − で入れる。</p>';
   }
   if(it.type==="table"){
     h += '<div class="sit">'+it.q+'</div>';
@@ -783,31 +1079,45 @@ function stage7(){
       }
     }
   }
-  if(c.res!==null){
-    if(it.type!=="formula"){
+  if(c.res!==null && it.type!=="card"){
+    if(it.type!=="formula" && it.type!=="draw"){
       if(c.res) h += '<div class="msg ok">正しい。'+it.ex+'</div>';
-      else h += '<div class="msg miss">'+(it.type==="num"?'入れた答え：'+c.vals[0]+'　正しくは '+fmtAns(it.ans)+'。':'')+it.ex+'</div>';
+      else h += '<div class="msg miss">'+(it.type==="num"?'入れた答え：'+c.vals[0]+'　正しくは '+fmtAns(it.ans)+'。':'')+(it.type==="nums"?'正しくは '+it.labels.map(function(lb,i){return lb+' '+fmtAns(it.ans[i]);}).join('、')+'。':'')+it.ex+'</div>';
     }
     if(!c.res) h += '<p class="prog">この問題は'+(it.type==="formula"?'数を変えて':'')+'あとでもう一度出る。</p>';
-    h += '<button type="button" class="btn main" data-fx="next">'+(D.pos+1<D.q.length||!c.res?'次へ':'この日の直しを終わる')+'</button>';
+    h += '<button type="button" class="btn main" data-fx="next">'+(D.pos+1<D.q.length||!c.res?'次へ':'この日を終わる')+'</button>';
   }
   return h + '<div class="foot"><button type="button" class="btn" data-go="1">ブロックで考えるへ</button></div>';
 }
+function stage7(){ return dayStage(S.fix, FIXDAYS, 'ワークの直し', '前に書いた答えを見て、どこがちがうかを考えてから解き直す。答えは1回だけ。まちがえた問題は、あとでもう一度出る。',
+  'この日の直しは終わり。<br><b>紙でやること：</b>ワークの×の横に、正しい答えを自分で書こう（式を書く問題は「aは○○」から）。'); }
+function stage8(){ return dayStage(S.wp, WPDAYS, '文章題', '型を決めてから解く。答えは1回だけ。まちがえた問題は、あとでもう一度出る。',
+  'この日の文章題は終わり。<br><b>紙でやること：</b>ワークの同じ問題に、型 → 式 → 計算 → <b>答えの文</b>まで自分で書こう。'); }
 function fmtAns(v){ if(Math.abs(v-Math.round(v))<1e-9) return m(Math.round(v)); var sg=v<0?-1:1, a=Math.abs(v); for(var d=2;d<=12;d++){ var n=a*d; if(Math.abs(n-Math.round(n))<1e-9) return ratHTML(rat(sg*Math.round(n),d)); } return String(v); }
-function fixAct(t){
-  var F=S.fix, D=F.days[F.day];
+function dayAct(F, DAYS, t){
+  var D=F.days[F.day];
   if(t.dataset.fday!=null){ F.day=+t.dataset.fday; render(); window.scrollTo(0,0); return true; }
-  if(t.dataset.fx==="redo"){ F.days[F.day]=freshFix().days[F.day]; render(); return true; }
+  if(t.dataset.fx==="redo"){ F.days[F.day]=freshDays(DAYS).days[F.day]; render(); return true; }
   if(D.done) return false;
   var e=D.q[D.pos], it=fixItem(e), c=D.cur;
   if(!c) return false;
   if(t.dataset.fxc!=null && c.res===null){ c.pick=+t.dataset.fxc; c.res=(c.pick===it.c); fb(c.res); render(); return true; }
   if(t.dataset.fxm!=null && c.res===null){ var i=+t.dataset.fxm, k=c.sel.indexOf(i); if(k>=0) c.sel.splice(k,1); else c.sel.push(i); render(); return true; }
+  if(t.dataset.fxk!=null){ var ki=+t.dataset.fxk, kk=c.chk.indexOf(ki); if(kk>=0) c.chk.splice(kk,1); else c.chk.push(ki); render(); return true; }
+  if(t.dataset.fxo!=null && c.res===null){ c.seq.push(+t.dataset.fxo); render(); return true; }
   if(t.dataset.fxa!=null && c.mPick===null){ c.mPick=+t.dataset.fxa; fb(c.mPick===it.k); render(); return true; }
   switch(t.dataset.fx){
+    case "card": c.res=true; D.pos++; D.cur=null; if(D.pos>=D.q.length){ D.done=true; sfx("done"); } render(); window.scrollTo(0,0); return true;
+    case "oclear": c.seq=[]; render(); return true;
+    case "bplus": if(c.res===null && c.n<8){ c.n++; sfx("place"); } render(); return true;
+    case "bminus": if(c.res===null && c.n>1) c.n--; render(); return true;
+    case "drawn": c.drawn=true; c.res=true; sfx("ok"); render(); return true;
     case "ok":
       if(it.type==="num"){ c.vals=[val("fxin")]; if(parseNum(c.vals[0])===null) return true; c.res=same(parseNum(c.vals[0]), it.ans); }
       else if(it.type==="table"){ c.vals=it.xs.map(function(x,i){return val("fxt"+i);}); c.res=it.ys.every(function(y,i){return same(parseNum(c.vals[i]),y);}); }
+      else if(it.type==="nums"){ c.vals=it.labels.map(function(x,i){return val("fxn"+i);}); c.res=it.ans.every(function(y,i){return same(parseNum(c.vals[i]),y);}); }
+      else if(it.type==="build"){ c.res = (c.n*it.unit===it.target); }
+      else if(it.type==="order"){ if(c.seq.length<it.opts.length) return true; c.res=c.seq.every(function(v,i){return v===i;}); }
       else if(it.type==="multi"){ if(!c.sel.length) return true; var a=c.sel.slice().sort(), b=it.c.slice().sort(); c.res = a.length===b.length && a.every(function(v,i){return v===b[i];}); }
       fb(c.res); render(); return true;
     case "aok":
@@ -850,7 +1160,7 @@ function sndLabel(){ var b=document.getElementById("snd"); if(b){ b.textContent 
 /* ---------- 全体描画 ---------- */
 function render(){
   renderNav(); sndLabel();
-  var f = [null,stage1,stage2,stage3,stage4,stage5,stage6,stage7][S.stage] || stage1;
+  var f = [null,stage1,stage2,stage3,stage4,stage5,stage6,stage7,stage8][S.stage] || stage1;
   app.innerHTML = '<section class="stage">'+f()+'</section>';
   save();
 }
@@ -919,7 +1229,7 @@ function act(a){
     case "s5again":
       S.s5={queue:firstRound(), pos:0, step:0, mPick:null, aIn:"", aOK:null, miss:false, extra:0, done:false}; break;
     case "reset":
-      if(confirm("最初からやり直しますか？")){ var keep=S.fix; S=fresh(); S.fix=keep; } break;
+      if(confirm("最初からやり直しますか？")){ var keep=S.fix, keep2=S.wp; S=fresh(); S.fix=keep; S.wp=keep2; } break;
     default: return;
   }
   render();
@@ -929,7 +1239,8 @@ document.addEventListener("click",function(e){
   var t = e.target.closest("button"); if(!t || t.disabled) return;
   if(t.id==="snd"){ S.mute=!S.mute; save(); sndLabel(); if(!S.mute) sfx("ok"); return; }
   if(t.dataset.go){ go(+t.dataset.go); return; }
-  if(S.stage===7 && fixAct(t)) return;
+  if(S.stage===7 && dayAct(S.fix, FIXDAYS, t)) return;
+  if(S.stage===8 && dayAct(S.wp, WPDAYS, t)) return;
   if(t.dataset.one){
     var holder = t.dataset.one==="q4" ? S.s3 : S.s2;
     var q = holder[t.dataset.one]; if(q.pick===null){ q.pick=+t.dataset.i; fb(q.pick===({q24:0,q0:1,q4:0})[t.dataset.one]); render(); } return;
@@ -945,8 +1256,8 @@ document.addEventListener("click",function(e){
 document.addEventListener("keydown",function(e){
   if(e.key!=="Enter" || !e.target.matches || !e.target.matches("input")) return;
   var id=e.target.id;
-  if(S.stage===7 && (id==="fxin"||id.indexOf("fxt")===0)){ var b=document.querySelector('[data-fx=ok]'); if(b) b.click(); return; }
-  if(S.stage===7 && id==="fxa"){ var b2=document.querySelector('[data-fx=aok]'); if(b2) b2.click(); return; }
+  if((S.stage===7||S.stage===8) && (id==="fxin"||id.indexOf("fxt")===0||id.indexOf("fxn")===0)){ var b=document.querySelector('[data-fx=ok]'); if(b) b.click(); return; }
+  if((S.stage===7||S.stage===8) && id==="fxa"){ var b2=document.querySelector('[data-fx=aok]'); if(b2) b2.click(); return; }
   if(id==="p1") act("build"); else if(id==="p3") act("wall"); else if(id==="ain") act("s5chk");
   else if(id==="dbl") act("dbl"); else if(id.indexOf("c2")===0) act("c2chk"); else if(id.indexOf("c3")===0) act("c3chk"); else if(id.indexOf("y4")===0) act("y4");
 });
@@ -955,6 +1266,7 @@ document.addEventListener("input",function(e){
   if(e.target.id==="p3") S.s3.pred=e.target.value;
 });
 if(!S.fix || !S.fix.days || S.fix.days.length!==4){ S.fix = freshFix(); }
+if(!S.wp || !S.wp.days || S.wp.days.length!==3 || S.wp.v!==2){ S.wp = freshDays(WPDAYS); S.wp.v=2; }
 render();
 })();
 </script>
